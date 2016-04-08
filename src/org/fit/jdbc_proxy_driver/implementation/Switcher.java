@@ -7,7 +7,9 @@ import java.util.List;
 
 /**
  * 
- * @author ondra
+ * @author Ondřej Marek
+ * 
+ * This class gathers information about connected databases and provides switching between contexts according to SQL queries.
  *
  */
 public class Switcher {
@@ -20,10 +22,14 @@ public class Switcher {
 	}
 	
 	/**
+	 * This method is used by Driver. It iterates through list of database and checks if they matches to the SQL query. Ideally it finds only one match.
+	 * If there is no match then it returns default connection or an exception is thrown if there is no default connection set.
+	 * If there are more matches the an exception is thrown as well.
 	 * 
-	 * @param sql
-	 * @return
-	 * @throws SQLException
+	 * 
+	 * @param sql - string of a SQL query
+	 * @return Connection - Returns that is connected to the SQL query
+	 * @throws SQLException - If there is no database that suits to query and there is no default database set or if there are more suitable databases, the exception is thrown
 	 */
 	public Connection getConnection(String sql) throws SQLException {
 		Connection res = null;

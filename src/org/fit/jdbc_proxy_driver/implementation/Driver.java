@@ -20,6 +20,13 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
+/**
+ * 
+ * @author Ondřej Marek
+ * 
+ * This class is the implementation of the Driver. It's implemented by Connection interface
+ *
+ */
 public class Driver implements Connection {
 	private List<ConnectionUnit> connectList;
 	
