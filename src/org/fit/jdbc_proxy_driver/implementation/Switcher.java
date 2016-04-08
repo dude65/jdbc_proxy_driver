@@ -2,8 +2,7 @@ package org.fit.jdbc_proxy_driver.implementation;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Iterator;
-import java.util.List;
+import java.util.Map;
 
 /**
  * 
@@ -13,10 +12,10 @@ import java.util.List;
  *
  */
 public class Switcher {
-	final private List<ConnectionUnit> connectList;
+	final private Map<String, ConnectionUnit> connectList;
 	final private ConnectionUnit defConnection;
 	
-	public Switcher(List<ConnectionUnit> connectList, ConnectionUnit defConnection) {
+	public Switcher(Map<String, ConnectionUnit> connectList, ConnectionUnit defConnection) {
 		this.connectList = connectList;
 		this.defConnection = defConnection;
 	}
@@ -35,8 +34,8 @@ public class Switcher {
 		Connection res = null;
 		boolean found = false;
 		
-		for(Iterator<ConnectionUnit> iterator = connectList.iterator(); iterator.hasNext();) {
-			ConnectionUnit u = iterator.next();
+		for(Map.Entry<String, ConnectionUnit> entry : connectList.entrySet()) {
+			ConnectionUnit u = entry.getValue();
 			
 			if (u.matches(sql)) {
 				if (!found) {
