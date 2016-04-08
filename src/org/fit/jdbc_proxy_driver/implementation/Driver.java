@@ -28,14 +28,13 @@ import java.util.concurrent.Executor;
  *
  */
 public class Driver implements Connection {
-	private List<ConnectionUnit> connectList;
+	private Switcher switcher;
 	
+	public Driver() throws SQLException {
+		switcher = Loader.loadData();
+	}
 	
 	//TODO features
-	
-	public void connect() throws SQLException {
-		
-	}
 	
 	@Override
 	public Statement createStatement() throws SQLException {
