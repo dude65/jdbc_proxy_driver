@@ -69,5 +69,11 @@ public class TestSwitcher {
 	public void test9() throws SQLException {
 		assert(s.getConnection(" SELECT * FROM persons") == s.getConnectionByName("database2"));
 	}
+	
+	@Test
+	public void test10() throws SQLException {
+		s.unsetDefaultDatabase();
+		assert(s.getConnection(" SELECT * FROM persons") == null);
+	}
 
 }
