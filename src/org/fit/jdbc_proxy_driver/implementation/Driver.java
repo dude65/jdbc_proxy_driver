@@ -45,13 +45,20 @@ public class Driver implements Connection {
 	}
 	
 	/**
-	 * Sets default database connection specified by name
+	 * Sets default database connection specified by name. When an exception is thrown then the default connection will not change.
 	 * 
 	 * @param name of connection
 	 * @throws SQLException - name of connection does not match to any connection
 	 */
 	public void setDefaultDatabase(String name) throws SQLException {
 		switcher.setDefaultDatabase(name);
+	}
+	
+	/**
+	 * Sets default database connection to null.
+	 */
+	public void unsetDefaultDatabase() {
+		switcher.unsetDefaultDatabase();
 	}
 	
 	@Override

@@ -93,6 +93,12 @@ public class Switcher {
 		return res;
 	}
 	
+	/**
+	 * Sets default database connection specified by name. When an exception is thrown then the default connection will not change.
+	 * 
+	 * @param name of connection
+	 * @throws SQLException - name of connection does not match to any connection
+	 */
 	public void setDefaultDatabase(String name) throws SQLException {
 		ConnectionUnit u = connectList.get(name);
 		
@@ -101,5 +107,12 @@ public class Switcher {
 		} else {
 			throw new SQLException("Cannot set default database connection. Database connection named " + name + " does not exists.");
 		}
+	}
+	
+	/**
+	 * Sets default database connection to null.
+	 */
+	public void unsetDefaultDatabase() {
+		defConnection = null;
 	}
 }
