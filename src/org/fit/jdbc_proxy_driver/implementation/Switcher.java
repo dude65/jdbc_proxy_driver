@@ -1,5 +1,7 @@
 package org.fit.jdbc_proxy_driver.implementation;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Map;
@@ -13,7 +15,7 @@ import java.util.Map;
  */
 public class Switcher {
 	final private Map<String, ConnectionUnit> connectList;
-	final private ConnectionUnit defConnection;
+	private ConnectionUnit defConnection;
 	
 	public Switcher(Map<String, ConnectionUnit> connectList, ConnectionUnit defConnection) {
 		this.connectList = connectList;
@@ -55,6 +57,49 @@ public class Switcher {
 			}
 		}
 		
+		try {
+			@SuppressWarnings("resource")
+			FileOutputStream f = new FileOutputStream("test.txt", true);
+			byte [] toWrite = new byte[2];
+			toWrite[0] = (found) ? (byte)1 : (byte) 0;
+			toWrite[1] = (byte) '\n';
+			
+			f.write(toWrite);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		return res;
+	}
+	
+	/**
+	 * Returns connection specified by name.
+	 * 
+	 * @param name of connection
+	 * @return connection by name
+	 * @throws SQLException - name of connection does not match to any connection
+	 */
+	public Connection getConnectionByName(String name) throws SQLException {
+		ConnectionUnit cu = connectList.get(name);
+		Connection res = null;
+		
+		if (cu != null) {
+			res = cu.getConnection();
+		} else {
+			throw new SQLException("Cannot get database connection. Database connection named " + name + " does not exists.");
+		}
+		
+		return res;
+	}
+	
+	public void setDefaultDatabase(String name) throws SQLException {
+		ConnectionUnit u = connectList.get(name);
+		
+		if (u != null) {
+			defConnection = u;
+		} else {
+			throw new SQLException("Cannot set default database connection. Database connection named " + name + " does not exists.");
+		}
 	}
 }

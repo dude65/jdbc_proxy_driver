@@ -33,6 +33,27 @@ public class Driver implements Connection {
 		switcher = Loader.loadData();
 	}
 	
+	/**
+	 * Returns connection specified by name.
+	 * 
+	 * @param name of connection
+	 * @return connection by name
+	 * @throws SQLException - name of connection does not match to any connection
+	 */
+	public Connection getConnectionByName(String name) throws SQLException {
+		return switcher.getConnectionByName(name);
+	}
+	
+	/**
+	 * Sets default database connection specified by name
+	 * 
+	 * @param name of connection
+	 * @throws SQLException - name of connection does not match to any connection
+	 */
+	public void setDefaultDatabase(String name) throws SQLException {
+		switcher.setDefaultDatabase(name);
+	}
+	
 	@Override
 	public PreparedStatement prepareStatement(String sql) throws SQLException {
 		Connection c = switcher.getConnection(sql);

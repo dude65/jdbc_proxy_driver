@@ -1,6 +1,5 @@
 bin/
 h2/
-databaseDrivers/
 .settings/
 .classpath
 .project
