@@ -115,7 +115,10 @@ public class Driver implements Connection {
 		return c.prepareStatement(sql, columnNames);
 	}
 	
-	
+	@Override
+	public void close() throws SQLException {
+		switcher.closeConnections();
+	}
 	
 	//TODO features
 	
@@ -133,11 +136,7 @@ public class Driver implements Connection {
 		return null;
 	}
 	
-	@Override
-	public void close() throws SQLException {
-		// TODO Auto-generated method stub
-		
-	}
+	
 	
 	@Override
 	public boolean isClosed() throws SQLException {

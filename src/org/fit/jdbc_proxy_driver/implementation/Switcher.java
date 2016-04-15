@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * 
@@ -91,6 +92,39 @@ public class Switcher {
 		}
 		
 		return res;
+	}
+	
+	/**
+	 * It closes all connections.
+	 * @throws SQLException - when some connections fails to close, then the exception with names of connections and descriptions of exception are thrown.
+	 */
+	public void closeConnections() throws SQLException {
+		Map<String, SQLException> exList = new TreeMap<>();
+		int textSize = 36;
+		
+		for (Map.Entry<String, ConnectionUnit> entry : connectList.entrySet()) {
+			String name = entry.getKey();
+			ConnectionUnit cu = entry.getValue();
+			
+			try {
+				cu.getConnection().close();
+			} catch (SQLException e) {
+				textSize += 3 + name.length() + e.getMessage().length();
+				exList.put(name, e);
+			}	
+		}
+		
+		if (exList.size() > 0) {
+			StringBuilder reason = new StringBuilder(textSize);
+			
+			reason.append("These connections cannot be closed:\n");
+			
+			for (Map.Entry<String, SQLException> entry : exList.entrySet()) {
+				reason.append('\n' + entry.getKey() + ": " + entry.getValue().getMessage());
+			}
+			
+			throw new SQLException(reason.toString());
+		}
 	}
 	
 	/**

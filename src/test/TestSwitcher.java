@@ -4,6 +4,7 @@ import java.sql.SQLException;
 
 import org.fit.jdbc_proxy_driver.implementation.Loader;
 import org.fit.jdbc_proxy_driver.implementation.Switcher;
+import org.junit.After;
 import org.junit.Test;
 
 public class TestSwitcher {
@@ -74,6 +75,11 @@ public class TestSwitcher {
 	public void test10() throws SQLException {
 		s.unsetDefaultDatabase();
 		assert(s.getConnection(" SELECT * FROM persons") == null);
+	}
+	
+	@After
+	public void close() throws SQLException {
+		s.closeConnections();
 	}
 
 }
