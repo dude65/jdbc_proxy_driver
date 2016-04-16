@@ -49,6 +49,10 @@ public class Switcher {
 					found = true;
 					res = u.getConnection();
 				} else {
+					failedList.clear();
+					failedList.add(res);
+					failedList.add(u.getConnection());
+					
 					throw new SQLException("The sql query is ambigious. There are more suitable database connection to your request.");
 				}
 			}
@@ -58,6 +62,7 @@ public class Switcher {
 			if (defConnection != null) {
 				res = defConnection.getConnection();
 			} else {
+				failedList.clear();
 				throw new SQLException("There is no suitable database to the sql query");
 			}
 		}
