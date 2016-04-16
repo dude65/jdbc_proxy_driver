@@ -141,6 +141,8 @@ public class Switcher {
 			
 			throw new SQLException(reason.toString());
 		}
+		
+		open = false;
 	}
 	
 	/**
@@ -174,5 +176,19 @@ public class Switcher {
 	 */
 	public List<Connection> getFailedConnections() {
 		return new LinkedList<Connection>(failedList);
+	}
+	
+	/**
+	 * Test if connections are closed.
+	 * 
+	 * @return - returns true if the closeConnections() was called
+	 * @throws SQLException - when some databases were not closed, the exception is thrown
+	 */
+	public boolean isClosed() throws SQLException {
+		if (!open && !failedList.isEmpty()) {
+			throw new SQLException("There was an attempt to close database connections but it was not successfull. Use method getFailedConnection to get a list of them.");
+		}
+		
+		return !open;
 	}
 }

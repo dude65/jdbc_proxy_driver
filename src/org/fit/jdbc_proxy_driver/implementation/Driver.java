@@ -71,6 +71,8 @@ public class Driver implements Connection {
 		return switcher.getFailedConnections();
 	}
 	
+	//Override methods
+	
 	@Override
 	public PreparedStatement prepareStatement(String sql) throws SQLException {
 		Connection c = switcher.getConnection(sql);
@@ -130,6 +132,10 @@ public class Driver implements Connection {
 		switcher.closeConnections();
 	}
 	
+	@Override
+	public boolean isClosed() throws SQLException {
+		return switcher.isClosed();
+	}
 	//TODO features
 	
 	@Override
@@ -148,11 +154,7 @@ public class Driver implements Connection {
 	
 	
 	
-	@Override
-	public boolean isClosed() throws SQLException {
-		// TODO Auto-generated method stub
-		return false;
-	}
+	
 	
 	@Override
 	public void abort(Executor executor) throws SQLException {
