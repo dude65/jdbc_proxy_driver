@@ -136,6 +136,13 @@ public class Driver implements Connection {
 	public boolean isClosed() throws SQLException {
 		return switcher.isClosed();
 	}
+	
+	@Override
+	public String nativeSQL(String sql) throws SQLException {
+		Connection c = switcher.getConnection(sql);
+		return c.nativeSQL(sql);
+	}
+	
 	//TODO features
 	
 	@Override
@@ -146,11 +153,7 @@ public class Driver implements Connection {
 
 	
 
-	@Override
-	public String nativeSQL(String sql) throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	
 	
 	
 	
