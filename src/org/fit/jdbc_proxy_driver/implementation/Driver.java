@@ -15,6 +15,7 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
@@ -59,6 +60,15 @@ public class Driver implements Connection {
 	 */
 	public void unsetDefaultDatabase() {
 		switcher.unsetDefaultDatabase();
+	}
+	
+	/**
+	 * Returns the list of failed connections from the last time, when exception was thrown. It is useful when handling exception.
+	 * 
+	 * @return - the list of failed connections (new object), if no connection ever failed, then returns empty list
+	 */
+	public List<Connection> getFailedConnections() {
+		return switcher.getFailedConnections();
 	}
 	
 	@Override

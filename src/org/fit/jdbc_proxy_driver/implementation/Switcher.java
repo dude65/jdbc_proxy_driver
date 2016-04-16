@@ -4,6 +4,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -17,6 +19,8 @@ import java.util.TreeMap;
 public class Switcher {
 	final private Map<String, ConnectionUnit> connectList;
 	private ConnectionUnit defConnection;
+	boolean open = true;
+	private List<Connection> failedList = new LinkedList<>();
 	
 	public Switcher(Map<String, ConnectionUnit> connectList, ConnectionUnit defConnection) {
 		this.connectList = connectList;
@@ -100,21 +104,28 @@ public class Switcher {
 	 */
 	public void closeConnections() throws SQLException {
 		Map<String, SQLException> exList = new TreeMap<>();
+		List<Connection> notClosed = new LinkedList<>();
+		
 		int textSize = 36;
 		
 		for (Map.Entry<String, ConnectionUnit> entry : connectList.entrySet()) {
 			String name = entry.getKey();
-			ConnectionUnit cu = entry.getValue();
+			Connection c = entry.getValue().getConnection();
 			
 			try {
-				cu.getConnection().close();
+				c.close();
 			} catch (SQLException e) {
 				textSize += 3 + name.length() + e.getMessage().length();
+				
 				exList.put(name, e);
+				notClosed.add(c);
 			}	
 		}
 		
 		if (exList.size() > 0) {
+			failedList.clear();
+			failedList.addAll(notClosed);
+			
 			StringBuilder reason = new StringBuilder(textSize);
 			
 			reason.append("These connections cannot be closed:\n");
@@ -139,6 +150,7 @@ public class Switcher {
 		if (u != null) {
 			defConnection = u;
 		} else {
+			failedList.clear();
 			throw new SQLException("Cannot set default database connection. Database connection named " + name + " does not exists.");
 		}
 	}
@@ -148,5 +160,14 @@ public class Switcher {
 	 */
 	public void unsetDefaultDatabase() {
 		defConnection = null;
+	}
+	
+	/**
+	 * Returns the list of failed connections from the last time, when exception was thrown. It is useful when handling exception.
+	 * 
+	 * @return - the list of failed connections (new object), if no connection ever failed, then returns empty list
+	 */
+	public List<Connection> getFailedConnections() {
+		return new LinkedList<Connection>(failedList);
 	}
 }
