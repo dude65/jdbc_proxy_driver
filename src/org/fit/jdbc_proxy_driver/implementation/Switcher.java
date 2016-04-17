@@ -26,6 +26,13 @@ public class Switcher {
 		this.connectList = connectList;
 		this.defConnection = defConnection;
 	}
+	/**
+	 * This method is getter for all connection units
+	 * @return
+	 */
+	public List<ConnectionUnit> getConnectionList() {
+		return new LinkedList<ConnectionUnit>(connectList.values());
+	}
 	
 	/**
 	 * This method is used by Driver. It iterates through list of database and checks if they matches to the SQL query. Ideally it finds only one match.

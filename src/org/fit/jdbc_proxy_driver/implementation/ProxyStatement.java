@@ -16,274 +16,269 @@ public class ProxyStatement implements Statement {
 	private Switcher switcher;
 	private ConnectionUnit current;
 	private Statement statement;
+	private int[] statementVal;
+	
+	private void setCurrentStatement(String sql) throws SQLException {
+		Connection c = switcher.getConnection(sql);
+		
+		if (c != current.getConnection()) {
+			switch (statementVal.length) {
+			case 2: statement = c.createStatement(statementVal[0], statementVal[1]); break;
+			case 3: statement = c.createStatement(statementVal[0], statementVal[1], statementVal[2]); break;
+			default: statement = c.createStatement();
+			}
+		}
+	}
 	
 	@Override
 	public <T> T unwrap(Class<T> iface) throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		return statement.unwrap(iface);
 	}
 
 	@Override
 	public boolean isWrapperFor(Class<?> iface) throws SQLException {
-		// TODO Auto-generated method stub
-		return false;
+		return statement.isWrapperFor(iface);
 	}
 
 	@Override
 	public ResultSet executeQuery(String sql) throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		setCurrentStatement(sql);
+		return statement.executeQuery(sql);
 	}
 
 	@Override
 	public int executeUpdate(String sql) throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
+		setCurrentStatement(sql);
+		return statement.executeUpdate(sql);
 	}
 
 	@Override
 	public void close() throws SQLException {
-		// TODO Auto-generated method stub
+		statement.close();
 		
 	}
 
 	@Override
 	public int getMaxFieldSize() throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
+		return statement.getMaxFieldSize();
 	}
 
 	@Override
 	public void setMaxFieldSize(int max) throws SQLException {
-		// TODO Auto-generated method stub
+		statement.setMaxFieldSize(max);
 		
 	}
 
 	@Override
 	public int getMaxRows() throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
+		return statement.getMaxRows();
 	}
 
 	@Override
 	public void setMaxRows(int max) throws SQLException {
-		// TODO Auto-generated method stub
+		statement.setMaxRows(max);
 		
 	}
 
 	@Override
 	public void setEscapeProcessing(boolean enable) throws SQLException {
-		// TODO Auto-generated method stub
+		statement.setEscapeProcessing(enable);
 		
 	}
 
 	@Override
 	public int getQueryTimeout() throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
+		return statement.getQueryTimeout();
 	}
 
 	@Override
 	public void setQueryTimeout(int seconds) throws SQLException {
-		// TODO Auto-generated method stub
+		statement.setQueryTimeout(seconds);
 		
 	}
 
 	@Override
 	public void cancel() throws SQLException {
-		// TODO Auto-generated method stub
+		statement.cancel();
 		
 	}
 
 	@Override
 	public SQLWarning getWarnings() throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		return statement.getWarnings();
 	}
 
 	@Override
 	public void clearWarnings() throws SQLException {
-		// TODO Auto-generated method stub
+		statement.clearWarnings();
 		
 	}
 
 	@Override
 	public void setCursorName(String name) throws SQLException {
-		// TODO Auto-generated method stub
+		statement.setCursorName(name);
 		
 	}
 
 	@Override
 	public boolean execute(String sql) throws SQLException {
-		// TODO Auto-generated method stub
-		return false;
+		setCurrentStatement(sql);
+		return statement.execute(sql);
 	}
 
 	@Override
 	public ResultSet getResultSet() throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		return statement.getResultSet();
 	}
 
 	@Override
 	public int getUpdateCount() throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
+		return statement.getUpdateCount();
 	}
 
 	@Override
 	public boolean getMoreResults() throws SQLException {
-		// TODO Auto-generated method stub
-		return false;
+		return statement.getMoreResults();
 	}
 
 	@Override
 	public void setFetchDirection(int direction) throws SQLException {
-		// TODO Auto-generated method stub
+		statement.setFetchDirection(direction);
 		
 	}
 
 	@Override
 	public int getFetchDirection() throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
+		return statement.getFetchDirection();
 	}
 
 	@Override
 	public void setFetchSize(int rows) throws SQLException {
-		// TODO Auto-generated method stub
+		statement.setFetchSize(rows);
 		
 	}
 
 	@Override
 	public int getFetchSize() throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
+		return statement.getFetchSize();
 	}
 
 	@Override
 	public int getResultSetConcurrency() throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
+		return statement.getResultSetConcurrency();
 	}
 
 	@Override
 	public int getResultSetType() throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
+		return statement.getResultSetType();
 	}
 
 	@Override
 	public void addBatch(String sql) throws SQLException {
-		// TODO Auto-generated method stub
+		setCurrentStatement(sql);
+		
+		statement.addBatch(sql);
 		
 	}
 
 	@Override
 	public void clearBatch() throws SQLException {
-		// TODO Auto-generated method stub
+		statement.clearBatch();
 		
 	}
 
 	@Override
 	public int[] executeBatch() throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		return statement.executeBatch();
 	}
 
 	@Override
 	public Connection getConnection() throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		return statement.getConnection();
 	}
 
 	@Override
 	public boolean getMoreResults(int current) throws SQLException {
-		// TODO Auto-generated method stub
-		return false;
+		return statement.getMoreResults(current);
 	}
 
 	@Override
 	public ResultSet getGeneratedKeys() throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		return statement.getGeneratedKeys();
 	}
 
 	@Override
-	public int executeUpdate(String sql, int autoGeneratedKeys)
-			throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
+	public int executeUpdate(String sql, int autoGeneratedKeys) throws SQLException {
+		setCurrentStatement(sql);
+		
+		return statement.executeUpdate(sql, autoGeneratedKeys);
 	}
 
 	@Override
-	public int executeUpdate(String sql, int[] columnIndexes)
-			throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
+	public int executeUpdate(String sql, int[] columnIndexes) throws SQLException {
+		setCurrentStatement(sql);
+		
+		return statement.executeUpdate(sql, columnIndexes);
 	}
 
 	@Override
-	public int executeUpdate(String sql, String[] columnNames)
-			throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
+	public int executeUpdate(String sql, String[] columnNames) throws SQLException {
+		setCurrentStatement(sql);
+		
+		return statement.executeUpdate(sql, columnNames);
 	}
 
 	@Override
-	public boolean execute(String sql, int autoGeneratedKeys)
-			throws SQLException {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean execute(String sql, int autoGeneratedKeys) throws SQLException {
+		setCurrentStatement(sql);
+		
+		return statement.execute(sql, autoGeneratedKeys);
 	}
 
 	@Override
 	public boolean execute(String sql, int[] columnIndexes) throws SQLException {
-		// TODO Auto-generated method stub
-		return false;
+		setCurrentStatement(sql);
+		
+		return statement.execute(sql, columnIndexes);
 	}
 
 	@Override
-	public boolean execute(String sql, String[] columnNames)
-			throws SQLException {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean execute(String sql, String[] columnNames) throws SQLException {
+		setCurrentStatement(sql);
+		
+		return statement.execute(sql, columnNames);
 	}
 
 	@Override
 	public int getResultSetHoldability() throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
+		return statement.getResultSetHoldability();
 	}
 
 	@Override
 	public boolean isClosed() throws SQLException {
-		// TODO Auto-generated method stub
-		return false;
+		return statement.isClosed();
 	}
 
 	@Override
 	public void setPoolable(boolean poolable) throws SQLException {
-		// TODO Auto-generated method stub
+		statement.setPoolable(poolable);
 		
 	}
 
 	@Override
 	public boolean isPoolable() throws SQLException {
-		// TODO Auto-generated method stub
-		return false;
+		return statement.isPoolable();
 	}
 
 	@Override
 	public void closeOnCompletion() throws SQLException {
-		// TODO Auto-generated method stub
+		statement.closeOnCompletion();
 		
 	}
 
 	@Override
 	public boolean isCloseOnCompletion() throws SQLException {
-		// TODO Auto-generated method stub
-		return false;
+		return statement.isCloseOnCompletion();
 	}
 
 }
