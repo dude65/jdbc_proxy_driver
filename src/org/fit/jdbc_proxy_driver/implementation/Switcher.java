@@ -28,7 +28,7 @@ public class Switcher {
 	}
 	/**
 	 * This method is getter for all connection units
-	 * @return
+	 * @return - list of connection units
 	 */
 	public List<ConnectionUnit> getConnectionList() {
 		return new LinkedList<ConnectionUnit>(connectList.values());

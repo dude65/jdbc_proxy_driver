@@ -14,9 +14,31 @@ import java.sql.Statement;
  */
 public class ProxyStatement implements Statement {
 	private Switcher switcher;
-	private ConnectionUnit current;
-	private Statement statement;
+	private ConnectionUnit current = null;
+	private Statement statement = null;
 	private int[] statementVal;
+	
+	public ProxyStatement(Switcher s) {
+		statementVal = new int[0];
+		switcher = s;
+	}
+	
+	public ProxyStatement(Switcher s, int resultSetType, int resultSetConcurrency) {
+		statementVal = new int [2];
+		statementVal[0] = resultSetType;
+		statementVal[1] = resultSetConcurrency;
+		
+		switcher = s;
+	}
+	
+	public ProxyStatement(Switcher s, int resultSetType, int resultSetConcurrency, int resultSetHoldability) {
+		statementVal = new int [3];
+		statementVal[0] = resultSetType;
+		statementVal[1] = resultSetConcurrency;
+		statementVal[2] = resultSetHoldability;
+		
+		switcher = s;
+	}
 	
 	private void setCurrentStatement(String sql) throws SQLException {
 		Connection c = switcher.getConnection(sql);

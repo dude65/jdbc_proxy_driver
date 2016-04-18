@@ -143,16 +143,22 @@ public class Driver implements Connection {
 		return c.nativeSQL(sql);
 	}
 	
-	//TODO features
-	
 	@Override
 	public Statement createStatement() throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		return new ProxyStatement(switcher);
 	}
 
+	@Override
+	public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
+		return new ProxyStatement(switcher, resultSetType, resultSetConcurrency);
+	}
 	
-
+	@Override
+	public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
+		return new ProxyStatement(switcher, resultSetType, resultSetConcurrency, resultSetHoldability);
+	}
+	
+	//TODO features
 	
 	
 	
@@ -285,13 +291,6 @@ public class Driver implements Connection {
 	}
 
 	@Override
-	public Statement createStatement(int resultSetType, int resultSetConcurrency)
-			throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public Map<String, Class<?>> getTypeMap() throws SQLException {
 		// TODO Auto-generated method stub
 		return null;
@@ -337,14 +336,6 @@ public class Driver implements Connection {
 	public void releaseSavepoint(Savepoint savepoint) throws SQLException {
 		// TODO Auto-generated method stub
 		
-	}
-
-	@Override
-	public Statement createStatement(int resultSetType,
-			int resultSetConcurrency, int resultSetHoldability)
-			throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 
