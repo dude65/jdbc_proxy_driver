@@ -27,10 +27,10 @@ import java.util.concurrent.Executor;
  * This class is the implementation of the Driver. It's implemented by Connection interface
  *
  */
-public class Driver implements Connection {
+public class ProxyConnection implements Connection {
 	private Switcher switcher;
 	
-	public Driver() throws SQLException {
+	public ProxyConnection() throws SQLException {
 		switcher = Loader.loadData();
 	}
 	
