@@ -1,7 +1,5 @@
 package org.fit.jdbc_proxy_driver.implementation;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.LinkedList;
@@ -72,19 +70,6 @@ public class Switcher {
 				failedList.clear();
 				throw new SQLException("There is no suitable database to the sql query");
 			}
-		}
-		
-		try {
-			@SuppressWarnings("resource")
-			FileOutputStream f = new FileOutputStream("test.txt", true);
-			byte [] toWrite = new byte[2];
-			toWrite[0] = (found) ? (byte)1 : (byte) 0;
-			toWrite[1] = (byte) '\n';
-			
-			f.write(toWrite);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 		
 		return res;

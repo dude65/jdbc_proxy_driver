@@ -36,9 +36,9 @@ public class Loader {
 			e.printStackTrace();
 		}
 		
-		ConnectionUnit u1 = new ConnectionUnit("database1", "^SELECT*$", a);
-		ConnectionUnit u2 = new ConnectionUnit("database2", "^UPDATE*$", b);
-		ConnectionUnit u3 = new ConnectionUnit("database3", "^INSERT*$", c);
+		ConnectionUnit u1 = new ConnectionUnit("database1", "^SELECT*", a);
+		ConnectionUnit u2 = new ConnectionUnit("database2", "^UPDATE*", b);
+		ConnectionUnit u3 = new ConnectionUnit("database3", "^INSERT*", c);
 		
 		Map<String, ConnectionUnit> map = new HashMap<>();
 		map.put("database1", u1);
