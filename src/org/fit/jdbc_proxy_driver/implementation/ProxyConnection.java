@@ -30,8 +30,8 @@ import java.util.concurrent.Executor;
 public class ProxyConnection implements Connection {
 	private Switcher switcher;
 	
-	public ProxyConnection() throws SQLException {
-		switcher = Loader.loadData();
+	public ProxyConnection(Switcher s) throws SQLException {
+		switcher = s;
 	}
 	
 	/**

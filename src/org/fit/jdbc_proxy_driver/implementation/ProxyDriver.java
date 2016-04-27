@@ -1,5 +1,7 @@
 package org.fit.jdbc_proxy_driver.implementation;
 
+import java.nio.file.InvalidPathException;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverPropertyInfo;
@@ -11,45 +13,57 @@ import java.util.logging.Logger;
 public class ProxyDriver implements Driver{
 
 	@Override
-	public boolean acceptsURL(String arg0) throws SQLException {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean acceptsURL(String url) throws SQLException {
+		boolean res;
+		
+		try {
+			Paths.get(url);
+			res = true;
+		} catch (InvalidPathException | NullPointerException e) {
+			res = false;
+		}
+		
+		return res;
 	}
 
 	@Override
-	public Connection connect(String arg0, Properties arg1) throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+	public Connection connect(String url, Properties info) throws SQLException {
+		Switcher s;
+		
+		if (url == null && info == null) {
+			s = Loader.loadData();
+		} else if (info == null) {
+			s = Loader.loadData(url);
+		} else {
+			s = Loader.loadData(info);
+		}
+		
+		return new ProxyConnection(s);
 	}
 
 	@Override
 	public int getMajorVersion() {
-		// TODO Auto-generated method stub
-		return 0;
+		return 1;
 	}
 
 	@Override
 	public int getMinorVersion() {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	@Override
 	public Logger getParentLogger() throws SQLFeatureNotSupportedException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Not supported yet");
 	}
 
 	@Override
 	public DriverPropertyInfo[] getPropertyInfo(String arg0, Properties arg1)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Not supported yet");
 	}
 
 	@Override
 	public boolean jdbcCompliant() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 }
