@@ -15,8 +15,11 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
@@ -29,6 +32,12 @@ import java.util.concurrent.Executor;
  */
 public class ProxyConnection implements Connection {
 	private Switcher switcher;
+	
+	private int timeout = 0;
+	private boolean timeoutSet = false;
+	
+	private boolean autoCommit;
+	private boolean autoCommitSet = false;
 	
 	public ProxyConnection(Switcher s) throws SQLException {
 		switcher = s;
@@ -69,6 +78,58 @@ public class ProxyConnection implements Connection {
 	 */
 	public List<Connection> getFailedConnections() {
 		return switcher.getFailedConnections();
+	}
+	
+	/**
+	 * This method is called if some method fails during transaction and all changes has to be unmade
+	 * 
+	 * @param map of savepoints
+	 * @return error message of unchanged connections
+	 */
+	private String returnChanges(Map<ConnectionUnit, Savepoint> save) {
+		String res = new String();
+		
+		for (Entry<ConnectionUnit, Savepoint> entry : save.entrySet()) {
+			ConnectionUnit rollUnit = entry.getKey();
+			Connection c = rollUnit.getConnection();
+			Savepoint s = entry.getValue();
+			
+			try {	
+				c.rollback(s);
+				c.releaseSavepoint(s);
+			} catch (SQLException e2) {
+				res += "\nUnable to return changes to former value in connection " + rollUnit.getName() + ". Original message: " + e2.getMessage();
+			}
+		}
+		
+		return res;
+	}
+	
+	private void releaseSavepoint(Map<ConnectionUnit, Savepoint> save) throws SQLException {
+		String exc = new String();
+		boolean first = true;
+		
+		for (Entry<ConnectionUnit, Savepoint> entry : save.entrySet()) {
+			ConnectionUnit u = entry.getKey();
+			Savepoint s = entry.getValue();
+			
+			try {
+				u.getConnection().releaseSavepoint(s);
+			} catch (SQLException e) {
+				if (first) {
+					first = false;
+				} else {
+					exc += '\n';
+				}
+				
+				exc += "Unable to release savepoint to connection " + u.getName() + ". Original message: " + e.getMessage();
+			}
+			
+		}
+		
+		if (! exc.isEmpty()) {
+			throw new SQLException(exc);
+		}
 	}
 	
 	//Override methods
@@ -158,6 +219,103 @@ public class ProxyConnection implements Connection {
 		return new ProxyStatement(switcher, resultSetType, resultSetConcurrency, resultSetHoldability);
 	}
 	
+	@Override
+	public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
+		List<ConnectionUnit> l = switcher.getConnectionList();
+		Map<ConnectionUnit, Savepoint> save = new HashMap<>();
+		ConnectionUnit u = null;
+		try {
+			for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
+				u = it.next();
+				Connection c = u.getConnection();
+				
+				save.put(u, c.setSavepoint());
+				c.setNetworkTimeout(executor, milliseconds);
+			}
+			
+		} catch (SQLException e) {
+			timeoutSet = false;
+			String rollBack = returnChanges(save);
+			
+			throw new SQLException("Unable to change network timeout in connection " + u.getName() + ". Original message: " + e.getMessage() + rollBack);
+		}
+		
+		timeoutSet = true;
+		releaseSavepoint(save);
+
+		
+		
+	}
+
+	@Override
+	public int getNetworkTimeout() throws SQLException {
+		if (!timeoutSet) {
+			throw new SQLException("Timeout has not been set yet!");
+		}
+		
+		return timeout;
+	}
+	
+	@Override
+	public void setAutoCommit(boolean autoCommit) throws SQLException {
+		List<ConnectionUnit> l = switcher.getConnectionList();
+		Map<ConnectionUnit, Savepoint> save = new HashMap<>();
+		ConnectionUnit u = null;
+		try {
+			for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
+				u = it.next();
+				Connection c = u.getConnection();
+				
+				save.put(u, c.setSavepoint());
+				c.setAutoCommit(autoCommit);
+			}
+			
+		} catch (SQLException e) {
+			autoCommitSet = false;
+			String rollBack = returnChanges(save);
+			
+			throw new SQLException("Unable to change auto commit mode in connection " + u.getName() + ". Original message: " + e.getMessage() + rollBack);
+		}
+		
+		autoCommitSet = true;
+		this.autoCommit = autoCommit;
+		
+		releaseSavepoint(save);
+		
+	}
+
+	@Override
+	public boolean getAutoCommit() throws SQLException {
+		if (!autoCommitSet) {
+			throw new SQLException("Auto commit has not been set yet!");
+		}
+		
+		return autoCommit;
+	}
+
+	@Override
+	public void commit() throws SQLException {
+		List<ConnectionUnit> l = switcher.getConnectionList();
+		Map<ConnectionUnit, Savepoint> save = new HashMap<>();
+		ConnectionUnit u = null;
+		try {
+			for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
+				u = it.next();
+				Connection c = u.getConnection();
+				
+				save.put(u, c.setSavepoint());
+				c.commit();
+			}
+			
+		} catch (SQLException e) {
+			String rollBack = returnChanges(save);
+			
+			throw new SQLException("Unable to commit connection " + u.getName() + ". Original message: " + e.getMessage() + rollBack);
+		}
+		
+		releaseSavepoint(save);
+	}
+	
 	//TODO features
 	
 	
@@ -170,61 +328,23 @@ public class ProxyConnection implements Connection {
 		// TODO Auto-generated method stub
 		
 	}
-
-	@Override
-	public void setNetworkTimeout(Executor executor, int milliseconds)
-			throws SQLException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public int getNetworkTimeout() throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-	
-	
-	
-	
-	
-	
-	
 	
 	
 	
 	//Unsupported
 	@Override
 	public <T> T unwrap(Class<T> iface) throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
 	@Override
 	public boolean isWrapperFor(Class<?> iface) throws SQLException {
-		// TODO Auto-generated method stub
-		return false;
+		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
 	
 
-	@Override
-	public void setAutoCommit(boolean autoCommit) throws SQLException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public boolean getAutoCommit() throws SQLException {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public void commit() throws SQLException {
-		// TODO Auto-generated method stub
-		
-	}
+	
 
 	@Override
 	public void rollback() throws SQLException {
