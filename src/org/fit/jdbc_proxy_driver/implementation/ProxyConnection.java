@@ -218,17 +218,17 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public Statement createStatement() throws SQLException {
-		return new ProxyStatement(switcher);
+		return new ProxyStatement(this);
 	}
 
 	@Override
 	public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
-		return new ProxyStatement(switcher, resultSetType, resultSetConcurrency);
+		return new ProxyStatement(this, resultSetType, resultSetConcurrency);
 	}
 	
 	@Override
 	public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
-		return new ProxyStatement(switcher, resultSetType, resultSetConcurrency, resultSetHoldability);
+		return new ProxyStatement(this, resultSetType, resultSetConcurrency, resultSetHoldability);
 	}
 	
 	@Override

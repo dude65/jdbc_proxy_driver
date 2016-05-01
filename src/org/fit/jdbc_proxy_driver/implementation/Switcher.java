@@ -177,7 +177,7 @@ public class Switcher {
 	 * @throws SQLException - when some databases were not closed, the exception is thrown
 	 */
 	public boolean isClosed() throws SQLException {
-		if (!open && !failedList.isEmpty()) {
+		if (open || failedList.isEmpty()) {
 			throw new SQLException("There was an attempt to close database connections but it was not successfull. Use method getFailedConnection to get a list of them.");
 		}
 		

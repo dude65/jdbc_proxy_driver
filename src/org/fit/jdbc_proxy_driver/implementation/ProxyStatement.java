@@ -13,43 +13,39 @@ import java.sql.Statement;
  *
  */
 public class ProxyStatement implements Statement {
-	private Switcher switcher;
-	private ConnectionUnit current = null;
+	private ProxyConnection connection;
+
 	private Statement statement = null;
-	private int[] statementVal;
 	
-	public ProxyStatement(Switcher s) {
-		statementVal = new int[0];
-		switcher = s;
+	int resultSetType = 0;
+	int resultSetConcurrency = 0;
+	int resultSetHoldability = 0;
+	
+	public ProxyStatement(ProxyConnection pc) {
+		connection = pc;
 	}
 	
-	public ProxyStatement(Switcher s, int resultSetType, int resultSetConcurrency) {
-		statementVal = new int [2];
-		statementVal[0] = resultSetType;
-		statementVal[1] = resultSetConcurrency;
+	public ProxyStatement(ProxyConnection pc, int resultSetType, int resultSetConcurrency) {
+		connection = pc;
 		
-		switcher = s;
+		this.resultSetType = resultSetType;
+		this.resultSetConcurrency = resultSetConcurrency;
 	}
 	
-	public ProxyStatement(Switcher s, int resultSetType, int resultSetConcurrency, int resultSetHoldability) {
-		statementVal = new int [3];
-		statementVal[0] = resultSetType;
-		statementVal[1] = resultSetConcurrency;
-		statementVal[2] = resultSetHoldability;
+	public ProxyStatement(ProxyConnection pc, int resultSetType, int resultSetConcurrency, int resultSetHoldability) {
+		connection = pc;
 		
-		switcher = s;
+		this.resultSetType = resultSetType;
+		this.resultSetConcurrency = resultSetConcurrency;
+		this.resultSetHoldability = resultSetHoldability;
 	}
 	
 	private void setCurrentStatement(String sql) throws SQLException {
-		Connection c = switcher.getConnection(sql);
-		
-		if (c != current.getConnection()) {
-			switch (statementVal.length) {
-			case 2: statement = c.createStatement(statementVal[0], statementVal[1]); break;
-			case 3: statement = c.createStatement(statementVal[0], statementVal[1], statementVal[2]); break;
-			default: statement = c.createStatement();
-			}
+		if (statement != null) {
+			statement.close();
 		}
+		
+		statement = connection.prepareCall(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
 	}
 	
 	@Override
