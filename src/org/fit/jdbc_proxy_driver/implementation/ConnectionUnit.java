@@ -4,6 +4,9 @@ import java.sql.Connection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 /**
  * 
  * @author Ondřej Marek
@@ -42,35 +45,27 @@ public class ConnectionUnit {
 		return m.find();
 	}
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		return result;
+		return new HashCodeBuilder(101, 13).append(name).toHashCode();
 	}
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (obj == null) {
+			return false;
+		}
+		
+		if (obj == this) {
 			return true;
-		if (obj == null)
+		}
+		
+		if (this.getClass() != obj.getClass()) {
 			return false;
-		if (!(obj instanceof ConnectionUnit))
-			return false;
-		ConnectionUnit other = (ConnectionUnit) obj;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
-		return true;
+		}
+		
+		ConnectionUnit oth = (ConnectionUnit) obj;
+		return new EqualsBuilder().append(name, oth.name).isEquals();
 	}
 	
 	
