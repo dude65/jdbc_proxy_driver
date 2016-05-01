@@ -16,7 +16,32 @@ import java.util.Properties;
  * 
  * @author Ondřej Marek
  *
- * This class is responsible for loading informations about databases
+ * This class is responsible for loading informations about databases from given properties.
+ * 
+ * An example of correct written properties file:
+ * items=2
+ * db0_driver=com.mysql.jdbc.Driver
+ * db0_url=jdbc:mysql://localhost/proxyDatabase1
+ * db0_name=MyDatabase1
+ * db0_user=root
+ * db0_password=root
+ * db0_regexp="^CREATE*"
+ * db1_driver=com.mysql.jdbc.Driver
+ * db1_url=jdbc:mysql://localhost/proxyDatabase2?user=dude65&password=12345
+ * db1_name=MyDatabase2
+ * db1_regexp="^SELECT*"
+ * default=MyDatabase2
+ * 
+ * items (compulsory) - number of databases to connect
+ * dbX_driver (compulsory) - class of driver for database connections
+ * dbX_url (compulsory) - url of database to connect
+ * dbX_name (compulsory) - name of how do you wish to name this connection
+ * dbX_user (optional) - database user
+ * dbX_password (optional) - database password
+ * dbX_regexp (compulsory) - regular expression associated to the connection
+ * default (optional) - name of database to which should be oriented all sql queries that are not associated
+ * 
+ * It is not allowed to have two database connections with the same name
  */
 public class Loader {
 	
@@ -84,6 +109,11 @@ public class Loader {
 		try {
 			for (int i = 0; i < items; i++) {
 				ConnectionUnit u = getUnit(prop, i);
+				
+				if (loaded.containsKey(u)) {
+					throw new SQLException("The name of database " + u.getName() + " is duplicated");
+				}
+				
 				loaded.put(u.getName(), u);
 			}
 		} catch (SQLException e) {
@@ -118,15 +148,22 @@ public class Loader {
 		return new Switcher(loaded, def);
 	}
 	
+	/**
+	 * Private method, that obtain connections from property file by a specified number 
+	 * @param prop - properties
+	 * @param i - specified number
+	 * @return - connection unit with connection
+	 * @throws SQLException - if data are incomplete or it is not possible to connect to a database, an exception is thrown 
+	 */
 	private static ConnectionUnit getUnit(Properties prop, int i) throws SQLException {
 		ConnectionUnit res = null;
 		
 		String driver = prop.getProperty("db" + i + "_driver");
 		String url = prop.getProperty("db" + i + "_url");
-		String regexp = prop.getProperty("db" + i + "_property");
 		String name = prop.getProperty("db" + i + "_name");
 		String user = prop.getProperty("db" + i + "_user");
 		String password = prop.getProperty("db" + i + "_password");
+		String regexp = prop.getProperty("db" + i + "_regexp");
 		
 		if (driver != null && url != null && regexp != null) {
 			try {
@@ -141,7 +178,7 @@ public class Loader {
 				
 				res = new ConnectionUnit(name, regexp, c);
 			} catch (SQLException e) {
-				
+				throw new SQLException("Cannot open a connection to a " + name + " database. Original message: " + e.getMessage());
 			} catch (ClassNotFoundException e) {
 				throw new SQLException("The driver in connection " + name + " was not found.");
 			}
@@ -152,6 +189,11 @@ public class Loader {
 		return res;
 	}
 	
+	/**
+	 * This private method is called if connecting to databases fails. It closes all opened connections.
+	 * @param connections
+	 * @throws SQLException - if some connections cannot be closed, an exception is thrown 
+	 */
 	private static void closeOpenedConnections(Map<String, ConnectionUnit> connections) throws SQLException {
 		String exc = new String();
 		boolean error = false;

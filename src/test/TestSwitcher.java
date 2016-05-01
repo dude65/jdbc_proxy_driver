@@ -1,6 +1,10 @@
 package test;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.SQLException;
+import java.util.Properties;
 
 import org.fit.jdbc_proxy_driver.implementation.Loader;
 import org.fit.jdbc_proxy_driver.implementation.Switcher;
@@ -13,8 +17,15 @@ public class TestSwitcher {
 	Switcher s;
 	
 	@Before
-	public void load() throws SQLException {
-		s = Loader.loadData();
+	public void load() throws SQLException, IOException {
+		String info = "";
+		
+		InputStream is = new ByteArrayInputStream(info.getBytes());
+		Properties p = new Properties();
+		p.load(is);
+		
+		
+		s = Loader.loadData(p);
 	}
 	
 	

@@ -10,6 +10,16 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
 import java.util.logging.Logger;
 
+/**
+ * This class represents the proxy driver itself. The method connect accepts two parameters: path to properties file and properties itself.
+ * If both are null, then it looks for a properties file config.properties in current directory.
+ * If both are specified, then it looks for a file specified by a given path.
+ * If only one of these two parameters is not null, it picks the right parameter.
+ * 
+ * To see, how to write a correct properties file, look into a Loader javadoc.
+ * @author ondra
+ *
+ */
 public class ProxyDriver implements Driver{
 
 	@Override

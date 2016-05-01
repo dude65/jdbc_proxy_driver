@@ -2,8 +2,15 @@ package org.fit.jdbc_proxy_driver.implementation;
 
 import java.sql.SQLException;
 import java.sql.Savepoint;
+import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * This class represents save point to a proxy database connections. It collects save points to multiple databases. 
+ * 
+ * @author ondra
+ *
+ */
 public class ProxySavepoint implements Savepoint{
 	private static int currID = 0;
 	private int id;
@@ -32,8 +39,12 @@ public class ProxySavepoint implements Savepoint{
 		return name;
 	}
 	
+	/**
+	 * Getter for a map of save points
+	 * @return
+	 */
 	public Map<ConnectionUnit, Savepoint> getSavepoints() {
-		return saveList;
+		return new HashMap<>(saveList);
 	}
 
 }
