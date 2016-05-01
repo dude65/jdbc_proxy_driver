@@ -39,6 +39,12 @@ public class ProxyConnection implements Connection {
 	private boolean autoCommit;
 	private boolean autoCommitSet = false;
 	
+	private boolean readOnly;
+	private boolean readOnlySet;
+	
+	private ProxySavepoint currTransaction;
+	
+	
 	public ProxyConnection(Switcher s) throws SQLException {
 		switcher = s;
 	}
@@ -105,6 +111,12 @@ public class ProxyConnection implements Connection {
 		return res;
 	}
 	
+	/**
+	 * Releases all savepoints that were used during transactions
+	 * 
+	 * @param map of savepoints
+	 * @throws SQLException - message of unreleased savepoints.
+	 */
 	private void releaseSavepoint(Map<ConnectionUnit, Savepoint> save) throws SQLException {
 		String exc = new String();
 		boolean first = true;
@@ -257,6 +269,15 @@ public class ProxyConnection implements Connection {
 	}
 	
 	@Override
+	public boolean isValid(int timeout) throws SQLException {
+		if (!timeoutSet) {
+			throw new SQLException("Timeout has not been set yet!");
+		}
+		
+		return timeout <= this.timeout;
+	}
+	
+	@Override
 	public void setAutoCommit(boolean autoCommit) throws SQLException {
 		List<ConnectionUnit> l = switcher.getConnectionList();
 		Map<ConnectionUnit, Savepoint> save = new HashMap<>();
@@ -316,22 +337,162 @@ public class ProxyConnection implements Connection {
 		releaseSavepoint(save);
 	}
 	
-	//TODO features
-	
-	
-	
-	
-	
+	@Override
+	public void setReadOnly(boolean readOnly) throws SQLException {
+		List<ConnectionUnit> l = switcher.getConnectionList();
+		Map<ConnectionUnit, Savepoint> save = new HashMap<>();
+		ConnectionUnit u = null;
+		try {
+			for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
+				u = it.next();
+				Connection c = u.getConnection();
+				
+				save.put(u, c.setSavepoint());
+				
+				c.setReadOnly(readOnly);
+			}
+			
+		} catch (SQLException e) {
+			String rollBack = returnChanges(save);
+			
+			throw new SQLException("Unable to set read only connection " + u.getName() + ". Original message: " + e.getMessage() + rollBack);
+		}
+		
+		readOnlySet = true;
+		
+		releaseSavepoint(save);
+		
+	}
+
+	@Override
+	public boolean isReadOnly() throws SQLException {
+		if (!readOnlySet) {
+			throw new SQLException("The value read only has not been set yet!");
+		}
+		
+		return readOnly;
+	}
 	
 	@Override
-	public void abort(Executor executor) throws SQLException {
-		// TODO Auto-generated method stub
+	public Savepoint setSavepoint() throws SQLException {
+		return setSavepoint(null);
+	}
+
+	@Override
+	public Savepoint setSavepoint(String name) throws SQLException {
+		List<ConnectionUnit> l = switcher.getConnectionList();
+		Map<ConnectionUnit, Savepoint> save = new HashMap<>();
+		ConnectionUnit u = null;
+		try {
+			for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
+				u = it.next();
+				Connection c = u.getConnection();
+				
+				save.put(u, c.setSavepoint());
+			}
+			
+		} catch (SQLException e) {
+			String rollBack = returnChanges(save);
+			
+			throw new SQLException("Unable to set read only connection " + u.getName() + ". Original message: " + e.getMessage() + rollBack);
+		}
+		
+		ProxySavepoint res = new ProxySavepoint(name, save);
+		currTransaction = res;
+		
+		return res;
+	}
+	
+	@Override
+	public void rollback() throws SQLException {
+		if (currTransaction == null) {
+			throw new SQLException("No avialable savepoints!");
+		}
+		
+		rollback(currTransaction);
 		
 	}
 	
+	@Override
+	public void rollback(Savepoint savepoint) throws SQLException {
+		ProxySavepoint ps;
+		
+		try {
+			ps = (ProxySavepoint) savepoint;
+		} catch (ClassCastException e) {
+			throw new SQLException("Invalid savepoint:  ID = " + savepoint.getSavepointId() + ", name = " + savepoint.getSavepointName());
+		}
+		
+		Map<ConnectionUnit, Savepoint> saveList = ps.getSavepoints();
+		Map<ConnectionUnit, Savepoint> saved = new HashMap<>();
+		ConnectionUnit u = null;
+		
+		try {
+			for (Entry<ConnectionUnit, Savepoint> entry : saveList.entrySet()) {
+				u = entry.getKey();
+				Connection c = u.getConnection();
+				Savepoint s = entry.getValue();
+				
+				saved.put(u, c.setSavepoint());
+				
+				c.rollback(s);
+			}
+		} catch (SQLException e) {
+			String rollBack = returnChanges(saved);
+			
+			throw new SQLException("Unable rollback connection " + u.getName() + ". Original message: " + e.getMessage() + rollBack);
+		}
+		
+		releaseSavepoint(saved);
+		
+	}
 	
+	@Override
+	public void releaseSavepoint(Savepoint savepoint) throws SQLException {
+		ProxySavepoint ps;
+		
+		try {
+			ps = (ProxySavepoint) savepoint;
+		} catch (ClassCastException e) {
+			throw new SQLException("Invalid savepoint:  ID = " + savepoint.getSavepointId() + ", name = " + savepoint.getSavepointName());
+		}
+		
+		Map<ConnectionUnit, Savepoint> saveList = ps.getSavepoints();
+		ConnectionUnit u = null;
+		String errMessage = new String();
+		boolean first = true;
+		
+		for (Entry<ConnectionUnit, Savepoint> entry : saveList.entrySet()) {
+			u = entry.getKey();
+			Connection c = u.getConnection();
+			Savepoint s = entry.getValue();
+			
+			try {
+				c.releaseSavepoint(s);
+			} catch (SQLException e) {
+				if (first) {
+					first = false;
+				} else {
+					errMessage += '\n';
+				}
+				
+				errMessage += "Cannot release savepoint in connection " + u.getName() + ". Original message: " + e.getMessage();
+			}
+			
+			
+		}
+		
+		if (! errMessage.isEmpty()) {
+			throw new SQLException(errMessage);
+		}
+	}	
 	
 	//Unsupported
+	@Override
+	public void abort(Executor executor) throws SQLException {
+		throw new UnsupportedOperationException("Not implemented yet");
+	}
+	
 	@Override
 	public <T> T unwrap(Class<T> iface) throws SQLException {
 		throw new UnsupportedOperationException("Not implemented yet");
@@ -342,203 +503,127 @@ public class ProxyConnection implements Connection {
 		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
-	
-
-	
-
-	@Override
-	public void rollback() throws SQLException {
-		// TODO Auto-generated method stub
-		
-	}
-	
-	
-
-
-
 	@Override
 	public DatabaseMetaData getMetaData() throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setReadOnly(boolean readOnly) throws SQLException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public boolean isReadOnly() throws SQLException {
-		// TODO Auto-generated method stub
-		return false;
+		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
 	@Override
 	public void setCatalog(String catalog) throws SQLException {
-		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Not implemented yet");
 		
 	}
 
 	@Override
 	public String getCatalog() throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
 	@Override
 	public void setTransactionIsolation(int level) throws SQLException {
-		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Not implemented yet");
 		
 	}
 
 	@Override
 	public int getTransactionIsolation() throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
+		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
 	@Override
 	public SQLWarning getWarnings() throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
 	@Override
 	public void clearWarnings() throws SQLException {
-		// TODO Auto-generated method stub
-		
+		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
 	@Override
 	public Map<String, Class<?>> getTypeMap() throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
 	@Override
 	public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
-		// TODO Auto-generated method stub
-		
+		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
 	@Override
 	public void setHoldability(int holdability) throws SQLException {
-		// TODO Auto-generated method stub
-		
+		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
 	@Override
 	public int getHoldability() throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public Savepoint setSavepoint() throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Savepoint setSavepoint(String name) throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void rollback(Savepoint savepoint) throws SQLException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void releaseSavepoint(Savepoint savepoint) throws SQLException {
-		// TODO Auto-generated method stub
-		
+		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
 
 	@Override
 	public Clob createClob() throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
 	@Override
 	public Blob createBlob() throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
 	@Override
 	public NClob createNClob() throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
 	@Override
 	public SQLXML createSQLXML() throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public boolean isValid(int timeout) throws SQLException {
-		// TODO Auto-generated method stub
-		return false;
+		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
 	@Override
 	public void setClientInfo(String name, String value)
 			throws SQLClientInfoException {
-		// TODO Auto-generated method stub
-		
+		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
 	@Override
 	public void setClientInfo(Properties properties)
 			throws SQLClientInfoException {
-		// TODO Auto-generated method stub
-		
+		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
 	@Override
 	public String getClientInfo(String name) throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
 	@Override
 	public Properties getClientInfo() throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
 	@Override
 	public Array createArrayOf(String typeName, Object[] elements)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
 	@Override
 	public Struct createStruct(String typeName, Object[] attributes)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
 	@Override
 	public void setSchema(String schema) throws SQLException {
-		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Not implemented yet");
 		
 	}
 
 	@Override
 	public String getSchema() throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
 	
