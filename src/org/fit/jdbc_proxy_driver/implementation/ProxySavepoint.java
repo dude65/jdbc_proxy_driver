@@ -6,10 +6,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * This class represents save point to a proxy database connections. It collects save points to multiple databases. 
+ * @author Ondřej Marek
  * 
- * @author ondra
- *
+ * This class represents save point to a proxy database connections. It collects save points to multiple databases.
  */
 public class ProxySavepoint implements Savepoint{
 	private static int currID = 0;

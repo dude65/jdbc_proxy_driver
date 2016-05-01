@@ -7,9 +7,9 @@ import java.sql.SQLWarning;
 import java.sql.Statement;
 
 /**
- * Object ProxyStatement is used when someone calls createStatement() in class Driver. All results depends on last called executeXXX method.
- * 
  * @author Ondřej Marek
+ * 
+ * Object ProxyStatement is used when someone calls createStatement() in class Driver. All results depends on last called executeXXX method.
  *
  */
 public class ProxyStatement implements Statement {

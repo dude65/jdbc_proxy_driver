@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * 
  * @author Ondřej Marek
  * 
  * This class gathers information about connected databases and provides switching between contexts according to SQL queries.
