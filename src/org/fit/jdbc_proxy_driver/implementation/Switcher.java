@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 /**
  * @author Ondřej Marek
  * 
@@ -181,5 +184,34 @@ public class Switcher {
 		}
 		
 		return !open;
+	}
+	
+	@Override
+	public String toString() {
+		return connectList.toString() + "/nDefault: " + ((defConnection == null) ? "null" : defConnection.toString());
+	}
+	
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder(99, 1171).append(defConnection).toHashCode();
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) {
+			return false;
+		}
+		
+		if (obj == this) {
+			return true;
+		}
+		
+		if (this.getClass() != obj.getClass()) {
+			return false;
+		}
+		
+		Switcher oth = (Switcher) obj;
+		
+		return new EqualsBuilder().append(connectList, oth.connectList).append(defConnection, oth.defConnection).isEquals();
 	}
 }

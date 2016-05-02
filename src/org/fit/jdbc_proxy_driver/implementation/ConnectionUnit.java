@@ -16,9 +16,9 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
  */
 
 public class ConnectionUnit {
-	final private Connection connection;
-	final private Pattern pattern;
-	final private String name;
+	private Connection connection;
+	private Pattern pattern;
+	private String name;
 	
 	public ConnectionUnit(String name, String regexp, Connection connection) {
 		this.name = name;
@@ -44,6 +44,11 @@ public class ConnectionUnit {
 		Matcher m = pattern.matcher(regexp);
 		return m.find();
 	}
+	
+	@Override
+	public String toString() {
+		return name + ", " + pattern;
+	}
 
 	@Override
 	public int hashCode() {
@@ -65,7 +70,7 @@ public class ConnectionUnit {
 		}
 		
 		ConnectionUnit oth = (ConnectionUnit) obj;
-		return new EqualsBuilder().append(name, oth.name).isEquals();
+		return new EqualsBuilder().append(name, oth.name).append(pattern.toString(), oth.pattern.toString()).isEquals();
 	}
 	
 	

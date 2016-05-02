@@ -1,18 +1,13 @@
 package test;
 
-import java.io.ByteArrayInputStream;
+import static org.junit.Assert.*;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.Properties;
 
 import org.fit.jdbc_proxy_driver.implementation.Loader;
 import org.fit.jdbc_proxy_driver.implementation.Switcher;
-import org.h2.tools.DeleteDbFiles;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,27 +17,8 @@ public class TestSwitcher {
 	Switcher s;
 	
 	@Before
-	public void load() throws SQLException, IOException, URISyntaxException {
-		
-		
-		String path = this.getClass().getClassLoader().getResource("config.properties").toString();
-		
-		URI uri = new URI(path).resolve(".");
-		String dir = uri.toString();
-		dir = dir.substring(5, dir.length() - 1);
-		
-		DeleteDbFiles.execute(dir, "proxyDatabase1", true);
-		DeleteDbFiles.execute(dir, "proxyDatabase2", true);
-		DeleteDbFiles.execute(dir, "proxyDatabase3", true);
-		
-		byte [] propBytes = Files.readAllBytes(Paths.get(new URI(path)));
-		
-		String info = new String(propBytes).replaceAll("~", dir);
-		
-		InputStream is = new ByteArrayInputStream(info.getBytes());
-		Properties p = new Properties();
-		p.load(is);
-		
+	public void load() throws SQLException, IOException, URISyntaxException {		
+		Properties p = new LoadProperties().load();
 		
 		s = Loader.loadData(p);
 	}
@@ -57,6 +33,8 @@ public class TestSwitcher {
 	public void test2() throws SQLException {
 		s.unsetDefaultDatabase();
 		s.getConnection(" SELECT * FROM persons");
+		
+		fail("There is no database that is assosiated to that query");
 	}
 	
 	@Test
@@ -75,11 +53,15 @@ public class TestSwitcher {
 	public void test5 () throws SQLException {
 		s.unsetDefaultDatabase();
 		s.getConnection("eg wesw");
+		
+		fail("There is no database that is assosiated to that query");
 	}
 	
 	@Test(expected=SQLException.class)
 	public void test6() throws SQLException {
 		s.setDefaultDatabase("wGARREG");
+		
+		fail("A database of that name does not exists.");
 	}
 	
 	
@@ -90,7 +72,7 @@ public class TestSwitcher {
 			s.setDefaultDatabase("database2");
 			Assert.assertTrue(true);
 		} catch (SQLException e) {
-			Assert.assertTrue(false);
+			fail("A database of that name exists so it should be choosen.");
 		}
 	}
 	
@@ -110,6 +92,8 @@ public class TestSwitcher {
 	public void test10() throws SQLException {
 		s.unsetDefaultDatabase();
 		s.getConnection(" SELECT * FROM persons");
+		
+		fail("There is no database that is assosiated to that query");
 	}
 	
 	@After

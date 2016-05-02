@@ -110,7 +110,7 @@ public class Loader {
 			for (int i = 0; i < items; i++) {
 				ConnectionUnit u = getUnit(prop, i);
 				
-				if (loaded.containsKey(u)) {
+				if (loaded.containsKey(u.getName())) {
 					throw new SQLException("The name of database " + u.getName() + " is duplicated");
 				}
 				
@@ -165,12 +165,12 @@ public class Loader {
 		String password = prop.getProperty("db" + i + "_password");
 		String regexp = prop.getProperty("db" + i + "_regexp");
 		
-		if (driver != null && url != null && regexp != null) {
+		if (driver != null && url != null && regexp != null && name != null) {
 			try {
 				Class.forName(driver);
 				Connection c;
 				
-				if (name == null || user == null || password == null) {
+				if (user == null || password == null) {
 					c = DriverManager.getConnection(url);
 				} else {
 					c = DriverManager.getConnection(url, user, password);
