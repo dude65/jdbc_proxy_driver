@@ -3,11 +3,16 @@ package test;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.Properties;
 
 import org.fit.jdbc_proxy_driver.implementation.Loader;
 import org.fit.jdbc_proxy_driver.implementation.Switcher;
+import org.h2.tools.DeleteDbFiles;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -17,8 +22,22 @@ public class TestSwitcher {
 	Switcher s;
 	
 	@Before
-	public void load() throws SQLException, IOException {
-		String info = "";
+	public void load() throws SQLException, IOException, URISyntaxException {
+		
+		
+		String path = this.getClass().getClassLoader().getResource("config.properties").toString();
+		
+		URI uri = new URI(path).resolve(".");
+		String dir = uri.toString();
+		dir = dir.substring(5, dir.length() - 1);
+		
+		DeleteDbFiles.execute(dir, "proxyDatabase1", true);
+		DeleteDbFiles.execute(dir, "proxyDatabase2", true);
+		DeleteDbFiles.execute(dir, "proxyDatabase3", true);
+		
+		byte [] propBytes = Files.readAllBytes(Paths.get(new URI(path)));
+		
+		String info = new String(propBytes).replaceAll("~", dir);
 		
 		InputStream is = new ByteArrayInputStream(info.getBytes());
 		Properties p = new Properties();

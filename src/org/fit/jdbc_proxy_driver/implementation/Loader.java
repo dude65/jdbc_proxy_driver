@@ -25,11 +25,11 @@ import java.util.Properties;
  * db0_name=MyDatabase1
  * db0_user=root
  * db0_password=root
- * db0_regexp="^CREATE*"
+ * db0_regexp=^CREATE*
  * db1_driver=com.mysql.jdbc.Driver
  * db1_url=jdbc:mysql://localhost/proxyDatabase2?user=dude65&password=12345
  * db1_name=MyDatabase2
- * db1_regexp="^SELECT*"
+ * db1_regexp=^SELECT*
  * default=MyDatabase2
  * 
  * items (compulsory) - number of databases to connect
