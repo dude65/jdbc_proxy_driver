@@ -105,8 +105,6 @@ public class Switcher {
 		Map<String, SQLException> exList = new TreeMap<>();
 		List<Connection> notClosed = new LinkedList<>();
 		
-		int textSize = 36;
-		
 		for (Map.Entry<String, ConnectionUnit> entry : connectList.entrySet()) {
 			String name = entry.getKey();
 			Connection c = entry.getValue().getConnection();
@@ -114,7 +112,6 @@ public class Switcher {
 			try {
 				c.close();
 			} catch (SQLException e) {
-				textSize += 3 + name.length() + e.getMessage().length();
 				
 				exList.put(name, e);
 				notClosed.add(c);
@@ -125,15 +122,15 @@ public class Switcher {
 			failedList.clear();
 			failedList.addAll(notClosed);
 			
-			StringBuilder reason = new StringBuilder(textSize);
+			String reason = new String();
 			
-			reason.append("These connections cannot be closed:\n");
+			reason += "These connections cannot be closed:\n";
 			
 			for (Map.Entry<String, SQLException> entry : exList.entrySet()) {
-				reason.append('\n' + entry.getKey() + ": " + entry.getValue().getMessage());
+				reason += '\n' + entry.getKey() + ": " + entry.getValue().getMessage();
 			}
 			
-			throw new SQLException(reason.toString());
+			throw new SQLException(reason);
 		}
 		
 		open = false;

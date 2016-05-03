@@ -5,6 +5,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
+import java.util.LinkedList;
+import java.util.Queue;
 
 /**
  * @author Ondřej Marek
@@ -17,9 +19,23 @@ public class ProxyStatement implements Statement {
 
 	private Statement statement = null;
 	
-	int resultSetType = 0;
-	int resultSetConcurrency = 0;
-	int resultSetHoldability = 0;
+	private Queue<SQLWarning> warnings = new LinkedList<>();
+	
+	private int resultSetType = 0;
+	private int resultSetConcurrency = 0;
+	private int resultSetHoldability = 0;
+	
+	private int maxFieldVal;
+	private boolean maxFieldSet = false;
+	
+	private int maxRowVal;
+	private boolean maxRowSet = false;
+	
+	private boolean escapeProcessingVal;
+	private boolean escapeProcessingSet;
+	
+	private int qTimeOutVal;
+	private boolean qTimeOutSet = false;
 	
 	public ProxyStatement(ProxyConnection pc) {
 		connection = pc;
@@ -41,11 +57,37 @@ public class ProxyStatement implements Statement {
 	}
 	
 	private void setCurrentStatement(String sql) throws SQLException {
+		if (statement.isClosed()) {
+			throw new SQLException("The statement is closed!");
+		}
+		
 		if (statement != null) {
+			SQLWarning w;
+			
+			while ((w = statement.getWarnings()) != null) {
+				warnings.add(w);
+			}
+			
 			statement.close();
 		}
 		
 		statement = connection.prepareCall(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
+		
+		if (maxFieldSet) {
+			statement.setMaxFieldSize(maxFieldVal);
+		}
+		
+		if (maxRowSet) {
+			statement.setMaxRows(maxRowVal);
+		}
+		
+		if (escapeProcessingSet) {
+			statement.setEscapeProcessing(escapeProcessingVal);
+		}
+		
+		if (qTimeOutSet) {
+			statement.setQueryTimeout(qTimeOutVal);
+		}
 	}
 	
 	@Override
@@ -85,6 +127,9 @@ public class ProxyStatement implements Statement {
 	public void setMaxFieldSize(int max) throws SQLException {
 		statement.setMaxFieldSize(max);
 		
+		maxFieldVal = max;
+		maxFieldSet = true;
+		
 	}
 
 	@Override
@@ -96,12 +141,16 @@ public class ProxyStatement implements Statement {
 	public void setMaxRows(int max) throws SQLException {
 		statement.setMaxRows(max);
 		
+		maxRowVal = max;
+		maxRowSet = false;
 	}
 
 	@Override
 	public void setEscapeProcessing(boolean enable) throws SQLException {
 		statement.setEscapeProcessing(enable);
 		
+		escapeProcessingVal = enable;
+		escapeProcessingSet = true;
 	}
 
 	@Override
@@ -113,6 +162,8 @@ public class ProxyStatement implements Statement {
 	public void setQueryTimeout(int seconds) throws SQLException {
 		statement.setQueryTimeout(seconds);
 		
+		qTimeOutVal = seconds;
+		qTimeOutSet = true;
 	}
 
 	@Override
@@ -123,14 +174,25 @@ public class ProxyStatement implements Statement {
 
 	@Override
 	public SQLWarning getWarnings() throws SQLException {
-		return statement.getWarnings();
+		SQLWarning res;
+		
+		if (warnings.isEmpty()) {
+			res = statement.getWarnings();
+		} else {
+			res = warnings.poll();
+		}
+		
+		return res;
 	}
 
 	@Override
 	public void clearWarnings() throws SQLException {
+		warnings.clear();
 		statement.clearWarnings();
 		
 	}
+	
+	//------------------------------
 
 	@Override
 	public void setCursorName(String name) throws SQLException {
@@ -183,7 +245,7 @@ public class ProxyStatement implements Statement {
 
 	@Override
 	public int getResultSetConcurrency() throws SQLException {
-		return statement.getResultSetConcurrency();
+		return resultSetConcurrency;
 	}
 
 	@Override
@@ -212,7 +274,7 @@ public class ProxyStatement implements Statement {
 
 	@Override
 	public Connection getConnection() throws SQLException {
-		return statement.getConnection();
+		return connection;
 	}
 
 	@Override
@@ -269,7 +331,7 @@ public class ProxyStatement implements Statement {
 
 	@Override
 	public int getResultSetHoldability() throws SQLException {
-		return statement.getResultSetHoldability();
+		return resultSetHoldability;
 	}
 
 	@Override
