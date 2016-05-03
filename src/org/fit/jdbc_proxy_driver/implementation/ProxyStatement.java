@@ -37,6 +37,18 @@ public class ProxyStatement implements Statement {
 	private int qTimeOutVal;
 	private boolean qTimeOutSet = false;
 	
+	private String cursorVal;
+	private boolean cursorSet = false;
+	
+	private int fetchDirVal;
+	private boolean fetchDirSet = false;
+	
+	private int fetchSizeVal;
+	private boolean fetchSizeSet = false;
+	
+	private boolean poolableVal;
+	private boolean poolableSet = false;
+	
 	public ProxyStatement(ProxyConnection pc) {
 		connection = pc;
 	}
@@ -87,6 +99,22 @@ public class ProxyStatement implements Statement {
 		
 		if (qTimeOutSet) {
 			statement.setQueryTimeout(qTimeOutVal);
+		}
+		
+		if (cursorSet) {
+			statement.setCursorName(cursorVal);
+		}
+		
+		if (fetchDirSet) {
+			statement.setFetchDirection(fetchDirVal);
+		}
+		
+		if (fetchSizeSet) {
+			statement.setFetchSize(fetchSizeVal);
+		}
+		
+		if (poolableSet) {
+			statement.setPoolable(poolableVal);
 		}
 	}
 	
@@ -191,13 +219,13 @@ public class ProxyStatement implements Statement {
 		statement.clearWarnings();
 		
 	}
-	
-	//------------------------------
 
 	@Override
 	public void setCursorName(String name) throws SQLException {
 		statement.setCursorName(name);
 		
+		cursorVal = name;
+		cursorSet = true;
 	}
 
 	@Override
@@ -225,6 +253,8 @@ public class ProxyStatement implements Statement {
 	public void setFetchDirection(int direction) throws SQLException {
 		statement.setFetchDirection(direction);
 		
+		fetchDirVal = direction;
+		fetchDirSet = true;
 	}
 
 	@Override
@@ -235,6 +265,9 @@ public class ProxyStatement implements Statement {
 	@Override
 	public void setFetchSize(int rows) throws SQLException {
 		statement.setFetchSize(rows);
+		
+		fetchSizeVal = rows;
+		fetchSizeSet = true;
 		
 	}
 
@@ -343,6 +376,8 @@ public class ProxyStatement implements Statement {
 	public void setPoolable(boolean poolable) throws SQLException {
 		statement.setPoolable(poolable);
 		
+		poolableVal = poolable;
+		poolableSet = true;
 	}
 
 	@Override
