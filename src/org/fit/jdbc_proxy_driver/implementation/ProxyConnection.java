@@ -234,27 +234,36 @@ public class ProxyConnection implements Connection {
 	@Override
 	public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
 		List<ConnectionUnit> l = switcher.getConnectionList();
-		Map<ConnectionUnit, Savepoint> save = new HashMap<>();
+		Map<ConnectionUnit, Integer> save = new HashMap<>();
 		ConnectionUnit u = null;
 		try {
 			for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
 				u = it.next();
 				Connection c = u.getConnection();
 				
-				save.put(u, c.setSavepoint());
+				save.put(u, c.getNetworkTimeout());
 				c.setNetworkTimeout(executor, milliseconds);
 			}
 			
 		} catch (SQLException e) {
 			timeoutSet = false;
-			String rollBack = returnChanges(save);
+			String exc = new String();
 			
-			throw new SQLException("Unable to change network timeout in connection " + u.getName() + ". Original message: " + e.getMessage() + rollBack);
+			for (Entry<ConnectionUnit, Integer> entry : save.entrySet()) {
+				ConnectionUnit cu = entry.getKey();
+				Integer time = entry.getValue();
+				
+				try {
+					cu.getConnection().setNetworkTimeout(executor, time);
+				} catch (SQLException sqle) {
+					exc += "\nUnable to set back network timeout in connection " + cu.getName() + " to value: " + time;
+				}
+			}
+			
+			throw new SQLException("Unable to change network timeout in connection " + u.getName() + ". Original message: " + e.getMessage() + exc);
 		}
 		
 		timeoutSet = true;
-		releaseSavepoint(save);
-
 		
 		
 	}
@@ -280,28 +289,37 @@ public class ProxyConnection implements Connection {
 	@Override
 	public void setAutoCommit(boolean autoCommit) throws SQLException {
 		List<ConnectionUnit> l = switcher.getConnectionList();
-		Map<ConnectionUnit, Savepoint> save = new HashMap<>();
+		Map<ConnectionUnit, Boolean> save = new HashMap<>();
 		ConnectionUnit u = null;
 		try {
 			for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
 				u = it.next();
 				Connection c = u.getConnection();
 				
-				save.put(u, c.setSavepoint());
+				save.put(u, c.getAutoCommit());
 				c.setAutoCommit(autoCommit);
 			}
 			
 		} catch (SQLException e) {
 			autoCommitSet = false;
-			String rollBack = returnChanges(save);
+			String exc = new String();
 			
-			throw new SQLException("Unable to change auto commit mode in connection " + u.getName() + ". Original message: " + e.getMessage() + rollBack);
+			for (Entry<ConnectionUnit, Boolean> entry : save.entrySet()) {
+				ConnectionUnit cu = entry.getKey();
+				Boolean commit = entry.getValue();
+				
+				try {
+					cu.getConnection().setAutoCommit(commit);
+				} catch (SQLException sqle) {
+					exc += "\nUnable to set back auto commit in connection " + cu.getName() + " to value: " + commit;
+				}
+			}
+			
+			throw new SQLException("Unable to change auto commit mode in connection " + u.getName() + ". Original message: " + e.getMessage() + exc);
 		}
 		
 		autoCommitSet = true;
 		this.autoCommit = autoCommit;
-		
-		releaseSavepoint(save);
 		
 	}
 
