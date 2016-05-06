@@ -1,11 +1,14 @@
 package org.fit.jdbc_proxy_driver.implementation;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
 /**
@@ -48,6 +51,8 @@ public class ProxyStatement implements Statement {
 	
 	private boolean poolableVal;
 	private boolean poolableSet = false;
+	
+	List<CallableStatement> batchList = new LinkedList<>();
 	
 	public ProxyStatement(ProxyConnection pc) {
 		connection = pc;
@@ -143,7 +148,7 @@ public class ProxyStatement implements Statement {
 	@Override
 	public void close() throws SQLException {
 		statement.close();
-		
+		clearBatch();
 	}
 
 	@Override
@@ -288,21 +293,61 @@ public class ProxyStatement implements Statement {
 
 	@Override
 	public void addBatch(String sql) throws SQLException {
-		setCurrentStatement(sql);
-		
-		statement.addBatch(sql);
+		try {
+			CallableStatement s = connection.prepareCall(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
+			batchList.add(s);
+		} catch (SQLException e) {
+			throw new SQLException("Unable to add batch, orriginal message: " + e.getMessage());
+		}
 		
 	}
 
 	@Override
 	public void clearBatch() throws SQLException {
-		statement.clearBatch();
+		String exc = new String();
+		boolean first = false;
+		
+		for (Iterator<CallableStatement> i = batchList.iterator(); i.hasNext();) {
+			Statement s = i.next();
+			
+			try {
+				s.close();
+			} catch (SQLException e) {
+				if (first) {
+					first = false;
+				} else {
+					exc += '\n';
+				}
+				
+				exc += "Unable to close statement during clearing batch. Original message: " + e.getMessage();
+			}
+			
+			
+		}
+		
+		if (! exc.isEmpty()) {
+			throw new SQLException(exc);
+		}
 		
 	}
 
 	@Override
 	public int[] executeBatch() throws SQLException {
-		return statement.executeBatch();
+		int[] res = new int[batchList.size()];
+		int i = 0;
+		
+		try {
+			for (Iterator<CallableStatement> it = batchList.iterator(); it.hasNext(); i++) {
+				CallableStatement s = it.next();
+				
+				res[i] = s.executeUpdate();
+			}
+		} catch (SQLException e) {
+			throw new SQLException("Executing batch failed, original message: " + e.getMessage());
+		}
+		
+		
+		return res;
 	}
 
 	@Override
