@@ -44,6 +44,12 @@ public class ProxyConnection implements Connection {
 	
 	private ProxySavepoint currTransaction;
 	
+	private String schema;
+	private boolean schemaSet = false;
+	
+	private String catalog;
+	private boolean catalogSet = false;
+	
 	
 	public ProxyConnection(Switcher s) throws SQLException {
 		switcher = s;
@@ -246,7 +252,6 @@ public class ProxyConnection implements Connection {
 			}
 			
 		} catch (SQLException e) {
-			timeoutSet = false;
 			String exc = new String();
 			
 			for (Entry<ConnectionUnit, Integer> entry : save.entrySet()) {
@@ -256,6 +261,7 @@ public class ProxyConnection implements Connection {
 				try {
 					cu.getConnection().setNetworkTimeout(executor, time);
 				} catch (SQLException sqle) {
+					timeoutSet = false;
 					exc += "\nUnable to set back network timeout in connection " + cu.getName() + " to value: " + time;
 				}
 			}
@@ -264,6 +270,7 @@ public class ProxyConnection implements Connection {
 		}
 		
 		timeoutSet = true;
+		timeout = milliseconds;
 		
 		
 	}
@@ -301,7 +308,6 @@ public class ProxyConnection implements Connection {
 			}
 			
 		} catch (SQLException e) {
-			autoCommitSet = false;
 			String exc = new String();
 			
 			for (Entry<ConnectionUnit, Boolean> entry : save.entrySet()) {
@@ -311,6 +317,7 @@ public class ProxyConnection implements Connection {
 				try {
 					cu.getConnection().setAutoCommit(commit);
 				} catch (SQLException sqle) {
+					autoCommitSet = false;
 					exc += "\nUnable to set back auto commit in connection " + cu.getName() + " to value: " + commit;
 				}
 			}
@@ -358,27 +365,39 @@ public class ProxyConnection implements Connection {
 	@Override
 	public void setReadOnly(boolean readOnly) throws SQLException {
 		List<ConnectionUnit> l = switcher.getConnectionList();
-		Map<ConnectionUnit, Savepoint> save = new HashMap<>();
+		Map<ConnectionUnit, Boolean> save = new HashMap<>();
 		ConnectionUnit u = null;
 		try {
 			for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
 				u = it.next();
 				Connection c = u.getConnection();
 				
-				save.put(u, c.setSavepoint());
+				save.put(u, c.isReadOnly());
 				
 				c.setReadOnly(readOnly);
 			}
 			
 		} catch (SQLException e) {
-			String rollBack = returnChanges(save);
+			String exc = new String();
 			
-			throw new SQLException("Unable to set read only connection " + u.getName() + ". Original message: " + e.getMessage() + rollBack);
+			for (Entry<ConnectionUnit, Boolean> entry : save.entrySet()) {
+				ConnectionUnit cu = entry.getKey();
+				Boolean ro = entry.getValue();
+				
+				try {
+					cu.getConnection().setReadOnly(ro);
+				} catch (SQLException sqle) {
+					readOnlySet = false;
+					
+					exc += "\nUnable to set back read only in connection " + cu.getName() + " to value: " + ro;
+				}
+			}
+			
+			throw new SQLException("Unable to set read only connection " + u.getName() + ". Original message: " + e.getMessage() + exc);
 		}
 		
 		readOnlySet = true;
-		
-		releaseSavepoint(save);
+		this.readOnly = readOnly;
 		
 	}
 
@@ -424,7 +443,7 @@ public class ProxyConnection implements Connection {
 	@Override
 	public void rollback() throws SQLException {
 		if (currTransaction == null) {
-			throw new SQLException("No avialable savepoints!");
+			throw new SQLException("No available savepoints!");
 		}
 		
 		rollback(currTransaction);
@@ -503,7 +522,108 @@ public class ProxyConnection implements Connection {
 		if (! errMessage.isEmpty()) {
 			throw new SQLException(errMessage);
 		}
-	}	
+	}
+	
+	@Override
+	public DatabaseMetaData getMetaData() throws SQLException {
+		Connection c = switcher.getDefaultConnection().getConnection();
+		
+		return c.getMetaData();
+	}
+	
+	@Override
+	public void setCatalog(String catalog) throws SQLException {
+		List<ConnectionUnit> l = switcher.getConnectionList();
+		Map<ConnectionUnit, String> save = new HashMap<>();
+		ConnectionUnit u = null;
+		try {
+			for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
+				u = it.next();
+				Connection c = u.getConnection();
+				
+				save.put(u, c.getCatalog());
+				c.setCatalog(catalog);
+			}
+			
+		} catch (SQLException e) {
+			String exc = new String();
+			
+			for (Entry<ConnectionUnit, String> entry : save.entrySet()) {
+				ConnectionUnit cu = entry.getKey();
+				String cat = entry.getValue();
+				
+				try {
+					cu.getConnection().setCatalog(cat);
+				} catch (SQLException sqle) {
+					catalogSet = false;
+					
+					exc += "\nUnable to set back catalog in connection " + cu.getName() + " to value: " + cat;
+				}
+			}
+			
+			throw new SQLException("Unable to change catalog in connection " + u.getName() + ". Original message: " + e.getMessage() + exc);
+		}
+		
+		
+		catalogSet = true;
+		this.catalog = catalog;
+	}
+
+	@Override
+	public String getCatalog() throws SQLException {
+		if (!catalogSet) {
+			throw new SQLException("Database catalog has not been set yet!");
+		}
+		
+		return catalog;
+	}
+	
+	@Override
+	public void setSchema(String schema) throws SQLException {
+		List<ConnectionUnit> l = switcher.getConnectionList();
+		Map<ConnectionUnit, String> save = new HashMap<>();
+		ConnectionUnit u = null;
+		try {
+			for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
+				u = it.next();
+				Connection c = u.getConnection();
+				
+				save.put(u, c.getSchema());
+				c.setSchema(schema);
+			}
+			
+		} catch (SQLException e) {
+			String exc = new String();
+			
+			for (Entry<ConnectionUnit, String> entry : save.entrySet()) {
+				ConnectionUnit cu = entry.getKey();
+				String sch = entry.getValue();
+				
+				try {
+					cu.getConnection().setSchema(sch);
+				} catch (SQLException sqle) {
+					schemaSet = false;
+					
+					exc += "\nUnable to set back schema in connection " + cu.getName() + " to value: " + sch;
+				}
+			}
+			
+			throw new SQLException("Unable to change schema in connection " + u.getName() + ". Original message: " + e.getMessage() + exc);
+		}
+		
+		
+		schemaSet = true;
+		this.schema = schema;
+	}
+
+	@Override
+	public String getSchema() throws SQLException {
+		if (!schemaSet) {
+			throw new SQLException("Database schema has not been set yet!");
+		}
+		
+		return schema;
+	}
 	
 	//Unsupported
 	@Override
@@ -518,22 +638,6 @@ public class ProxyConnection implements Connection {
 
 	@Override
 	public boolean isWrapperFor(Class<?> iface) throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet");
-	}
-
-	@Override
-	public DatabaseMetaData getMetaData() throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet");
-	}
-
-	@Override
-	public void setCatalog(String catalog) throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet");
-		
-	}
-
-	@Override
-	public String getCatalog() throws SQLException {
 		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
@@ -632,20 +736,6 @@ public class ProxyConnection implements Connection {
 			throws SQLException {
 		throw new UnsupportedOperationException("Not implemented yet");
 	}
-
-	@Override
-	public void setSchema(String schema) throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet");
-		
-	}
-
-	@Override
-	public String getSchema() throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet");
-	}
-
-	
-
 	
 
 }

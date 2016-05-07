@@ -34,6 +34,14 @@ public class Switcher {
 		return new LinkedList<ConnectionUnit>(connectList.values());
 	}
 	
+	public ConnectionUnit getDefaultConnection() throws SQLException {
+		if (defConnection == null) {
+			throw new SQLException("No default connection set!");
+		}
+		
+		return defConnection;
+	}
+	
 	/**
 	 * This method is used by Driver. It iterates through list of database and checks if they matches to the SQL query. Ideally it finds only one match.
 	 * If there is no match then it returns default connection or an exception is thrown if there is no default connection set.
