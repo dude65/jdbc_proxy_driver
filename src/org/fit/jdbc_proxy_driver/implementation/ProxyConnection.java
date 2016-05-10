@@ -325,6 +325,10 @@ public class ProxyConnection implements Connection {
 			throw new SQLException("Unable to change auto commit mode in connection " + u.getName() + ". Original message: " + e.getMessage() + exc);
 		}
 		
+		if (!autoCommit) {
+			currTransaction = (ProxySavepoint) setSavepoint();
+		}
+		
 		autoCommitSet = true;
 		this.autoCommit = autoCommit;
 		
