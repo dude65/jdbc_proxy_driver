@@ -20,7 +20,7 @@ import java.util.Queue;
 public class ProxyStatement implements Statement {
 	private ProxyConnection connection;
 
-	private Statement statement = null;
+	private Statement statement;
 	
 	private Queue<SQLWarning> warnings = new LinkedList<>();
 	
@@ -56,6 +56,8 @@ public class ProxyStatement implements Statement {
 	
 	public ProxyStatement(ProxyConnection pc) {
 		connection = pc;
+		
+		initiateStatement();
 	}
 	
 	public ProxyStatement(ProxyConnection pc, int resultSetType, int resultSetConcurrency) {
@@ -63,6 +65,8 @@ public class ProxyStatement implements Statement {
 		
 		this.resultSetType = resultSetType;
 		this.resultSetConcurrency = resultSetConcurrency;
+		
+		initiateStatement();
 	}
 	
 	public ProxyStatement(ProxyConnection pc, int resultSetType, int resultSetConcurrency, int resultSetHoldability) {
@@ -71,6 +75,24 @@ public class ProxyStatement implements Statement {
 		this.resultSetType = resultSetType;
 		this.resultSetConcurrency = resultSetConcurrency;
 		this.resultSetHoldability = resultSetHoldability;
+		
+		initiateStatement();
+	}
+	
+	private final void initiateStatement() {
+		Switcher s = connection.getSwitcher();
+		
+		try {
+			statement = s.getDefaultConnection().getConnection().createStatement();
+		} catch (SQLException | NullPointerException e) {
+			List<ConnectionUnit> l = s.getConnectionList();
+			
+			try {
+				statement = l.get(0).getConnection().createStatement();
+			} catch (SQLException sqle) {
+				
+			}
+		}
 	}
 	
 	/**

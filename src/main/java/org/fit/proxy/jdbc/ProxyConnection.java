@@ -53,6 +53,9 @@ public class ProxyConnection implements Connection {
 	
 	public ProxyConnection(Switcher s) throws SQLException {
 		switcher = s;
+		
+		setAutoCommit(true);
+		setReadOnly(false);
 	}
 	
 	/**
@@ -148,6 +151,10 @@ public class ProxyConnection implements Connection {
 		if (! exc.isEmpty()) {
 			throw new SQLException(exc);
 		}
+	}
+	
+	public Switcher getSwitcher() {
+		return switcher;
 	}
 	
 	//Override methods
@@ -677,103 +684,103 @@ public class ProxyConnection implements Connection {
 	//Unsupported
 	@Override
 	public void abort(Executor executor) throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet");
+		throw new UnsupportedOperationException("Not implemented yet. (Method abort)");
 	}
 	
 	@Override
 	public <T> T unwrap(Class<T> iface) throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet");
+		throw new UnsupportedOperationException("Not implemented yet. (Method unwrap)");
 	}
 
 	@Override
 	public boolean isWrapperFor(Class<?> iface) throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet");
+		throw new UnsupportedOperationException("Not implemented yet. (Method isWrapperFor)");
 	}
 
 	@Override
 	public void setTransactionIsolation(int level) throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet");
+		throw new UnsupportedOperationException("Not implemented yet. (Method setTransactionIsolation)");
 		
 	}
 
 	@Override
 	public int getTransactionIsolation() throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet");
+		throw new UnsupportedOperationException("Not implemented yet. (Method getTransactionIsolation)");
 	}
 
 	@Override
 	public Map<String, Class<?>> getTypeMap() throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet");
+		throw new UnsupportedOperationException("Not implemented yet. (Method getTypeMap)");
 	}
 
 	@Override
 	public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet");
+		throw new UnsupportedOperationException("Not implemented yet. (Method setTypeMap)");
 	}
 
 	@Override
 	public void setHoldability(int holdability) throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet");
+		throw new UnsupportedOperationException("Not implemented yet. (Method setHoldability)");
 	}
 
 	@Override
 	public int getHoldability() throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet");
+		throw new UnsupportedOperationException("Not implemented yet. (Method getHoldability)");
 	}
 
 
 	@Override
 	public Clob createClob() throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet");
+		throw new UnsupportedOperationException("Not implemented yet. (Method createClob)");
 	}
 
 	@Override
 	public Blob createBlob() throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet");
+		throw new UnsupportedOperationException("Not implemented yet. (Method createBlob)");
 	}
 
 	@Override
 	public NClob createNClob() throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet");
+		throw new UnsupportedOperationException("Not implemented yet. (Method createNClob)");
 	}
 
 	@Override
 	public SQLXML createSQLXML() throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet");
+		throw new UnsupportedOperationException("Not implemented yet. (Method createSQLXML)");
 	}
 
 	@Override
 	public void setClientInfo(String name, String value)
 			throws SQLClientInfoException {
-		throw new UnsupportedOperationException("Not implemented yet");
+		throw new UnsupportedOperationException("Not implemented yet. (Method setClientInfo)");
 	}
 
 	@Override
 	public void setClientInfo(Properties properties)
 			throws SQLClientInfoException {
-		throw new UnsupportedOperationException("Not implemented yet");
+		throw new UnsupportedOperationException("Not implemented yet. (Method setClientInfo)");
 	}
 
 	@Override
 	public String getClientInfo(String name) throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet");
+		throw new UnsupportedOperationException("Not implemented yet. (Method getClientInfo)");
 	}
 
 	@Override
 	public Properties getClientInfo() throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet");
+		throw new UnsupportedOperationException("Not implemented yet. (Method getClientInfo)");
 	}
 
 	@Override
 	public Array createArrayOf(String typeName, Object[] elements)
 			throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet");
+		throw new UnsupportedOperationException("Not implemented yet. (Method createArrayOf)");
 	}
 
 	@Override
 	public Struct createStruct(String typeName, Object[] attributes)
 			throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet");
+		throw new UnsupportedOperationException("Not implemented yet. (Method createStruct)");
 	}
 	
 
