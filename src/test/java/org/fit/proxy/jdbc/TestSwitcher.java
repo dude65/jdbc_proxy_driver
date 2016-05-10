@@ -1,4 +1,4 @@
-package test;
+package org.fit.proxy.jdbc;
 
 import static org.junit.Assert.*;
 import java.io.IOException;
@@ -6,8 +6,8 @@ import java.net.URISyntaxException;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import org.fit.jdbc_proxy_driver.implementation.Loader;
-import org.fit.jdbc_proxy_driver.implementation.Switcher;
+import org.fit.proxy.jdbc.Loader;
+import org.fit.proxy.jdbc.Switcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

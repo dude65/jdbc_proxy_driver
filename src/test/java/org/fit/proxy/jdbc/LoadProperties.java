@@ -1,4 +1,4 @@
-package test;
+package org.fit.proxy.jdbc;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

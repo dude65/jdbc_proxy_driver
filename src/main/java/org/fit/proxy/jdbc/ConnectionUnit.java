@@ -1,4 +1,4 @@
-package org.fit.jdbc_proxy_driver.implementation;
+package org.fit.proxy.jdbc;
 
 import java.sql.Connection;
 import java.util.regex.Matcher;

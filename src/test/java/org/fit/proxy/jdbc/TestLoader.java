@@ -1,4 +1,4 @@
-package test;
+package org.fit.proxy.jdbc;
 
 
 import static org.junit.Assert.*;
@@ -12,9 +12,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.fit.jdbc_proxy_driver.implementation.ConnectionUnit;
-import org.fit.jdbc_proxy_driver.implementation.Loader;
-import org.fit.jdbc_proxy_driver.implementation.Switcher;
+import org.fit.proxy.jdbc.ConnectionUnit;
+import org.fit.proxy.jdbc.Loader;
+import org.fit.proxy.jdbc.Switcher;
 import org.junit.Assert;
 import org.junit.Test;
 

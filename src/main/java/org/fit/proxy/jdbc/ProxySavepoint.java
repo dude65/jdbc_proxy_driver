@@ -1,4 +1,4 @@
-package org.fit.jdbc_proxy_driver.implementation;
+package org.fit.proxy.jdbc;
 
 import java.sql.SQLException;
 import java.sql.Savepoint;
