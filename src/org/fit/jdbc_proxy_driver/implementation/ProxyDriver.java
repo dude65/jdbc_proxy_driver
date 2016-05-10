@@ -1,5 +1,7 @@
 package org.fit.jdbc_proxy_driver.implementation;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -26,6 +28,13 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class ProxyDriver implements Driver{
 	
+	/**
+	 * It parses given URL with prefix and returns the path to properties file
+	 * 
+	 * @param url with prefix
+	 * @return path to properties file
+	 * @throws SQLException
+	 */
 	private static String parseUrl(String url) throws SQLException {
 		if (url == null) {
 			return null;
@@ -35,7 +44,7 @@ public class ProxyDriver implements Driver{
 		String prefix = "jdbc:proxy:";
 		
 		if (StringUtils.startsWith(url, prefix)) {
-			res = StringUtils.substring(url, 11);
+			res = StringUtils.substring(url, prefix.length());
 		}
 		
 		return res;
@@ -92,7 +101,23 @@ public class ProxyDriver implements Driver{
 	public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException {
 		int items = 2;
 		
-		if (info != null && info.containsKey("items")) {
+		url = parseUrl(url);
+		
+		if (info == null) {
+			info = new Properties();
+		}
+		
+		if (url != null) {
+			try {
+				info.clear();
+				info.load(new FileInputStream(url));
+			} catch (IOException e) {
+				throw new SQLException("Cannot load properties file from given url.");
+			}
+		}
+		
+		
+		if (info.containsKey("items")) {
 			try {
 				items = Integer.parseInt(info.getProperty("items"));
 				
@@ -105,34 +130,57 @@ public class ProxyDriver implements Driver{
 		
 		DriverPropertyInfo[] res = new DriverPropertyInfo[2 + 6 * items];
 		
-		res[0] = new DriverPropertyInfo("items", "Number of connnections to databases.");
-		res[1] = new DriverPropertyInfo("default", "Specifies primary connection by name.");
+		res[0] = new DriverPropertyInfo("items", new Integer(items).toString());
+		res[1] = new DriverPropertyInfo("default", emptyIfNull(info.getProperty("default")));
 		
 		res[0].required = true;
 		res[1].required = false;
 		
+		res[0].description = "Number of connnections to databases.";
+		res[1].description = "Specifies primary connection by name.";
+		
 		for (int i = 0; i < items; i++) {
-			res[i * 6 + 2] = new DriverPropertyInfo("db" + i + "_driver", "Specifies the class for database driver.");
+			res[i * 6 + 2] = new DriverPropertyInfo("db" + i + "_driver", emptyIfNull(info.getProperty("db" + i + "_driver")));
 			res[i * 6 + 2].required = true;
+			res[i * 6 + 2].description = "Specifies the class for database driver.";
 			
-			res[i * 6 + 3] = new DriverPropertyInfo("db" + i + "_url", "Specifies the database url. It may contains additional information such as user name or password.");
+			res[i * 6 + 3] = new DriverPropertyInfo("db" + i + "_url", emptyIfNull(info.getProperty("db" + i + "_url")));
 			res[i * 6 + 3].required = true;
+			res[i * 6 + 3].description = "Specifies the database url. It may contains additional information such as user name or password.";
 			
-			res[i * 6 + 4] = new DriverPropertyInfo("db" + i + "_name", "Unique name to mark database connection.");
+			res[i * 6 + 4] = new DriverPropertyInfo("db" + i + "_name", emptyIfNull(info.getProperty("db" + i + "_name")));
 			res[i * 6 + 4].required = true;
+			res[i * 6 + 4].description = "Unique name to mark database connection.";
 			
-			res[i * 6 + 5] = new DriverPropertyInfo("db" + i + "_user", "Specifies the database user name.");
+			res[i * 6 + 5] = new DriverPropertyInfo("db" + i + "_user", emptyIfNull(info.getProperty("db" + i + "_user")));
 			res[i * 6 + 5].required = false;
+			res[i * 6 + 5].description = "Specifies the database user name.";
 			
-			res[i * 6 + 6] = new DriverPropertyInfo("db" + i + "_password", "Specifies the password to database.");
+			res[i * 6 + 6] = new DriverPropertyInfo("db" + i + "_password", emptyIfNull(info.getProperty("db" + i + "_password")));
 			res[i * 6 + 6].required = false;
+			res[i * 6 + 6].description = "Specifies the password to database.";
 			
-			res[i * 6 + 7] = new DriverPropertyInfo("db" + i + "_regexp", "Specifies regular expression that is going to be associated to this connection.");
+			res[i * 6 + 7] = new DriverPropertyInfo("db" + i + "_regexp", emptyIfNull(info.getProperty("db" + i + "_regexp")));
 			res[i * 6 + 7].required = true;
+			res[i * 6 + 7].description = "Specifies regular expression that is going to be associated to this connection.";
 		}
 		
 		
 		return res;
+	}
+	
+	/**
+	 * Returns the same string, but when is null, it returns empty String
+	 * 
+	 * @param str
+	 * @return same string
+	 */
+	private static String emptyIfNull(String str) {
+		if (str == null) {
+			str = new String();
+		}
+		
+		return str;
 	}
 	@Override
 	public boolean jdbcCompliant() {

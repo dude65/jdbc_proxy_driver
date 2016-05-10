@@ -73,6 +73,12 @@ public class ProxyStatement implements Statement {
 		this.resultSetHoldability = resultSetHoldability;
 	}
 	
+	/**
+	 * This method sets current statement. It closes the previous one and opens new statement according to given sql
+	 * 
+	 * @param given SQL query
+	 * @throws SQLException - if statement is closed or it is not possible to set the some values as there were in previous statement
+	 */
 	private void setCurrentStatement(String sql) throws SQLException {
 		
 		
