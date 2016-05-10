@@ -10,6 +10,8 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
 import java.util.logging.Logger;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * @author Ondřej Marek
  * 
@@ -23,10 +25,27 @@ import java.util.logging.Logger;
  *
  */
 public class ProxyDriver implements Driver{
-
+	
+	private static String parseUrl(String url) throws SQLException {
+		if (url == null) {
+			return null;
+		}
+		
+		String res = null;
+		String prefix = "jdbc:proxy:";
+		
+		if (StringUtils.startsWith(url, prefix)) {
+			res = StringUtils.substring(url, 11);
+		}
+		
+		return res;
+	}
+	
 	@Override
 	public boolean acceptsURL(String url) throws SQLException {
 		boolean res;
+		
+		url = parseUrl(url);
 		
 		try {
 			Paths.get(url);
@@ -41,13 +60,14 @@ public class ProxyDriver implements Driver{
 	@Override
 	public Connection connect(String url, Properties info) throws SQLException {
 		Switcher s;
+		url = parseUrl(url);
 		
 		if (url == null && info == null) {
 			s = Loader.loadData();
-		} else if (info == null) {
-			s = Loader.loadData(url);
-		} else {
+		} else if (url == null) {
 			s = Loader.loadData(info);
+		} else {
+			s = Loader.loadData(url);
 		}
 		
 		return new ProxyConnection(s);

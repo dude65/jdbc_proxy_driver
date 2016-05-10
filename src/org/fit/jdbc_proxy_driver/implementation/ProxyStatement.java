@@ -74,11 +74,13 @@ public class ProxyStatement implements Statement {
 	}
 	
 	private void setCurrentStatement(String sql) throws SQLException {
-		if (statement.isClosed()) {
-			throw new SQLException("The statement is closed!");
-		}
+		
 		
 		if (statement != null) {
+			if (statement.isClosed()) {
+				throw new SQLException("The statement is closed!");
+			}
+			
 			SQLWarning w;
 			
 			while ((w = statement.getWarnings()) != null) {
@@ -86,6 +88,8 @@ public class ProxyStatement implements Statement {
 			}
 			
 			statement.close();
+			
+			
 		}
 		
 		statement = connection.prepareCall(sql, resultSetType, resultSetConcurrency, resultSetHoldability);

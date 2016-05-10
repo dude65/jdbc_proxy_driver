@@ -74,11 +74,14 @@ public class Loader {
 		} catch (IOException e) {
 			throw new SQLException("Properties data are missing");
 		} finally {
-			try {
-				is.close();
-			} catch (IOException e) {
-				throw new SQLException("Unable to close properties file");
+			if (is != null) {
+				try {
+					is.close();
+				} catch (IOException e) {
+					throw new SQLException("Unable to close properties file");
+				}
 			}
+			
 		}
 		
 		return loadData(prop);
