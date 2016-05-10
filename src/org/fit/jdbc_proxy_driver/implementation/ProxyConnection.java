@@ -629,6 +629,51 @@ public class ProxyConnection implements Connection {
 		return schema;
 	}
 	
+	@Override
+	public void clearWarnings() throws SQLException {
+		List<ConnectionUnit> l = switcher.getConnectionList();
+		String exc = new String();
+		
+		for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
+			ConnectionUnit cu = it.next();
+			
+			try {
+				cu.getConnection().clearWarnings();
+			} catch (SQLException e) {
+				if (! exc.isEmpty()) {
+					exc += '\n';
+				}
+				
+				exc += "Unable to clear warnings in connection: " + cu.getName() + ". Original message: " + e.getMessage();
+			}
+		}
+		
+		if (! exc.isEmpty()) {
+			throw new SQLException(exc);
+		}
+	}
+	
+	@Override
+	public SQLWarning getWarnings() throws SQLException {
+		SQLWarning res = null;
+		
+		ConnectionUnit conn = null;
+		
+		try {
+			conn = switcher.getDefaultConnection();
+			res = conn.getConnection().getWarnings();
+		} catch (SQLException e) {
+		}
+		
+		for (Iterator<ConnectionUnit> it = switcher.getConnectionList().iterator(); res != null && it.hasNext();) {
+			conn = it.next();
+			
+			res = conn.getConnection().getWarnings();
+		}
+		
+		return res;
+	}
+	
 	//Unsupported
 	@Override
 	public void abort(Executor executor) throws SQLException {
@@ -653,16 +698,6 @@ public class ProxyConnection implements Connection {
 
 	@Override
 	public int getTransactionIsolation() throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet");
-	}
-
-	@Override
-	public SQLWarning getWarnings() throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet");
-	}
-
-	@Override
-	public void clearWarnings() throws SQLException {
 		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
