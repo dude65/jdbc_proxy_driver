@@ -18,3 +18,5 @@ To see how to configure properties and to see usage examples, visit usage.html
 
 Licence:
 This project was created as a school (FIT ČVUT) work in cooperetion with Profinit s.r.o company. Everybody is free to use the project without any fee. Everybody can change the code of the driver as he wish. Please, provide the name of original author.
+
+Author: Ondřej Marek, 2016

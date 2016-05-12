@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Proxy driver - usage</title>
+<meta name="generator" content="Bluefish 2.2.7" >
+<meta name="author" content="Ondra" >
+<meta name="date" content="2016-05-13T01:01:49+0200" >
+<meta name="copyright" content="">
+<meta name="keywords" content="">
+<meta name="description" content="">
+<meta name="ROBOTS" content="NOINDEX, NOFOLLOW">
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="content-type" content="application/xhtml+xml; charset=UTF-8">
+<meta http-equiv="content-style-type" content="text/css">
+<meta http-equiv="expires" content="0">
+</head>
+
+<body>
+
+<h1>Proxy driver - usage</h1>
+
+<h2>Connecting to driver</h2>
+<ul>
+<li><b>Class:</b> org.fit.proxy.jdbc.ProxyDriver</li>
+<li><b>URL prefix:</b> jdbc:proxy:</li>
+<li><b>Path:</b> path to properties file</li>
+</ul>
+
+<h3>Code examples:</h3>
+
+<code>Class.forName("org.fit.proxy.jdbc.ProxyDriver");<br>
+Connection proxyConnection = DriverManager.getConnection("jdbc:proxy:../properties/proxy.properties");</code>
+
+<code>import org.fit.proxy.jdbc.ProxyDriver;<br>
+...<br>
+DriverManager.registerDriver(new ProxyDriver());<br>
+Connection proxyConnection = DriverManager.getConnection("jdbc:proxy:../properties/proxy.properties");</code>
+
+<p>There is also a possibility to get a connection with given properties only without URL:</p>
+<code>import org.fit.proxy.jdbc.ProxyDriver;<br>
+...<br>
+Properties proxyProperties = new Properties();<br>
+proxyProperties.load("../properties/proxy.properties");<br>
+Driver proxyDriver = new ProxyDriver();<br>
+Connection proxyConnection = proxyDriver(null, proxyProperties);</code>
+
+<p>When URL and Properties are given, properties file given by URL is selected</p>
+<code>import org.fit.proxy.jdbc.ProxyDriver;<br>
+...<br>
+Properties proxyProperties = new Properties();<br>
+proxyProperties.load("../properties/anotherProxy.properties");<br>
+Driver proxyDriver = new ProxyDriver();<br>
+Connection proxyConnection = proxyDriver("jdbc:proxy:../properties/selectedProxy.properties", proxyProperties);</code>
+
+<p>If no URL and Properties are given, it tries to search for properties in current directory with name: config.properties</p>
+<code>import org.fit.proxy.jdbc.ProxyDriver;<br>
+...<br>
+Driver proxyDriver = new ProxyDriver();<br>
+Connection proxyConnection = proxyDriver(null, null); //URL is same as "jdbc:proxy:./config.properties"</code>
+
+
+<h2>Properties settings:</h2>
+
+<h2>Using driver examples:</h2>
+
+<h2>Advices:</h2>
+
+<h2>Unsupported features:</h2>
+</body>
+</html>
