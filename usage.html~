@@ -4,7 +4,7 @@
 <title>Proxy driver - usage</title>
 <meta name="generator" content="Bluefish 2.2.7" >
 <meta name="author" content="Ondra" >
-<meta name="date" content="2016-05-13T00:58:36+0200" >
+<meta name="date" content="2016-05-13T17:29:03+0200" >
 <meta name="copyright" content="">
 <meta name="keywords" content="">
 <meta name="description" content="">
@@ -30,7 +30,7 @@
 
 <code>Class.forName("org.fit.proxy.jdbc.ProxyDriver");<br>
 Connection proxyConnection = DriverManager.getConnection("jdbc:proxy:../properties/proxy.properties");</code>
-
+<p>----</p>
 <code>import org.fit.proxy.jdbc.ProxyDriver;<br>
 ...<br>
 DriverManager.registerDriver(new ProxyDriver());<br>
@@ -57,6 +57,62 @@ Connection proxyConnection = proxyDriver("jdbc:proxy:../properties/selectedProxy
 ...<br>
 Driver proxyDriver = new ProxyDriver();<br>
 Connection proxyConnection = proxyDriver(null, null); //URL is same as "jdbc:proxy:./config.properties"</code>
+
+
+<h2>Properties settings:</h2>
+
+<ul>
+<li><b>items</b> (compulsory) - number of databases to connect</li>
+<li><b>dbX_driver</b> (compulsory) - class of driver for database connections</li>
+<li><b>dbX_url</b> (compulsory) - URL of database to connect</li>
+<li><b>dbX_name</b> (compulsory) - name of how do you wish to name this connection</li>
+<li><b>dbX_user</b> (optional) - database user</li>
+<li><b>dbX_password</b> (optional) - database password</li>
+<li><b>dbX_regexp</b> (compulsory) - regular expression associated to the connection</li>
+<li><b>default</b> (optional) - name of database to which should be oriented all SQL queries that are not associated</li>
+
+<p>It is not allowed to have two database connections with the same name.</p>
+</ul>
+
+<h3>Properties example:</h3>
+<code>items=2<br>
+db0_driver=com.mysql.jdbc.Driver<br>
+db0_url=jdbc:mysql://localhost/proxyDatabase1<br>
+db0_name=MyDatabase1<br>
+db0_user=proxyDriver1<br>
+db0_password=heslo1<br>
+db0_regexp=^UPDATE*<br>
+db1_driver=com.mysql.jdbc.Driver<br>
+db1_url=jdbc:mysql://localhost/proxyDatabase2?user=proxyDriver2&password=heslo2<br>
+db1_name=MyDatabase2<br>
+db1_regexp=^SELECT*<br>
+default=MyDatabase2</code>
+
+<h2>Using driver examples:</h2>
+<p>Using driver is very simple, use it like standard JDBC driver. Suppose that properties settings are same in following examples as they are in previous and data are the same in both databases.</p>
+
+<h3>Code examples:</h3>
+<code>//conection<br>
+Class.forName("org.fit.proxy.jdbc.ProxyDriver");<br>
+Connection proxyConnection = DriverManager.getConnection("jdbc:proxy:../properties/proxy.properties");<br>
+<br>
+Statement proxyStatement = proxyConnection.createStatement();<br>
+<br>
+//update data in first database<br>
+s.execute("UPDATE persons SET firstName = 'Lazy' WHERE ID = 8");<br>
+<br>
+//print data from second database<br>
+ResultSet rs = s.executeQuery("SELECT * FROM persons");<br>
+while (rs.next()) {<br>
+	System.out.println(rs.getString(1) + "," + rs.getString(2) + "," + rs.getString(3));<br>
+}
+</code>
+
+<h2>Advices:</h2>
+<p>Not written yet</p>
+
+<h2>Unsupported features:</h2>
+<p>Not written yet</p>
 
 </body>
 </html>
