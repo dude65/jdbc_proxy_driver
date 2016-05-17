@@ -4,7 +4,7 @@
 <title>Proxy driver - usage</title>
 <meta name="generator" content="Bluefish 2.2.7" >
 <meta name="author" content="Ondra" >
-<meta name="date" content="2016-05-13T17:29:03+0200" >
+<meta name="date" content="2016-05-17T15:58:46+0200" >
 <meta name="copyright" content="">
 <meta name="keywords" content="">
 <meta name="description" content="">
@@ -91,25 +91,79 @@ default=MyDatabase2</code>
 <h2>Using driver examples:</h2>
 <p>Using driver is very simple, use it like standard JDBC driver. Suppose that properties settings are same in following examples as they are in previous and data are the same in both databases.</p>
 
-<h3>Code examples:</h3>
-<code>//conection<br>
+<h3>Code example:</h3>
+<code>//open connection<br>
 Class.forName("org.fit.proxy.jdbc.ProxyDriver");<br>
 Connection proxyConnection = DriverManager.getConnection("jdbc:proxy:../properties/proxy.properties");<br>
 <br>
 Statement proxyStatement = proxyConnection.createStatement();<br>
 <br>
 //update data in first database<br>
-s.execute("UPDATE persons SET firstName = 'Lazy' WHERE ID = 8");<br>
+proxyStatement.execute("UPDATE `persons` SET firstName = 'Lazy' WHERE ID = 8");<br>
 <br>
 //print data from second database<br>
-ResultSet rs = s.executeQuery("SELECT * FROM persons");<br>
+ResultSet rs = proxyStatement.executeQuery("SELECT * FROM `persons`");<br>
 while (rs.next()) {<br>
 	System.out.println(rs.getString(1) + "," + rs.getString(2) + "," + rs.getString(3));<br>
-}
+}<br>
+<br>
+//setting auto commit = false<br>
+proxyConnection.setAutoCommit(false);<br>
+<br>
+proxyStatement.executeQuery("UPDATE persons SET `homeID` = 2 WHERE `homeID` = 1"); //updates MyDatabase1<br>
+proxyStatement.executeQuery("INSERT INTO `homes` (`street`, `city`, `houseNumber`, `zipCode`) VALUES ('Svobodná', 'Svobodov', '1', '1')"); //updates MyDatabase2 (is default)<br>
+<br>
+//rollback<br>
+proxyConnection.rollback();<br>
+<br>
+//New feature - setting default connection<br>
+ProxyConnection proxy = (ProxyConnection) proxyConnection;<br>
+<br>
+//setting connection which is not present - will fail<br>
+<br>
+try {<br>
+	proxy.setDefaultConnection("Nonsense");<br>
+} catch (SQLException e) {<br>
+	System.err.println(e.getMessage()); //will be printed<br>
+}<br>
+<br>
+//setting default connection correctly<br>
+proxy.setDefaultConnection("MyDatabase1");<br>
+proxyStatement.executeQuery("INSERT INTO `homes` (`street`, `city`, `houseNumber`, `zipCode`) VALUES ('Svobodná', 'Svobodov', '1', '1')"); //updates MyDatabase1 (is default)<br>
+<br>
+//unset default connection<br>
+proxy.unsetDefaultConnection();<br>
+<br>
+//Trying to execute queries that are not associated - an exception will be thrown<br> 
+try {<br>
+proxyStatement.executeQuery("INSERT INTO `homes` (`street`, `city`, `houseNumber`, `zipCode`) VALUES ('Svobodná', 'Svobodov', '1', '1')"); //will fail - query is not associated to any database connection<br>
+} catch (SQLException e) {<br>
+	System.err.println(e.getMessage());<br> //will be printed
+}<br>
+//close connection<br>
+proxyStatement.close();<br>
+proxyConnection.close();
 </code>
 
 <h2>Advices:</h2>
-<p>Not written yet</p>
+<p>The only thing that is set on start is auto commit = true. Setting of one thing will affect all connection. Furthermore, asking for value of connection attribute will probably fail if called before setting.</p>
+
+<h3>Examples:</h3>
+<h4>Wrong:</h4>
+<code>Class.forName("org.fit.proxy.jdbc.ProxyDriver");<br>
+Connection proxyConnection = DriverManager.getConnection("jdbc:proxy:../properties/proxy.properties");<br>
+<br>
+boolean readOnly = proxyConnection.isReadOnly(); //will fail<br>
+proxyConnection.setReadOnly(true); //will not be executed
+</code>
+
+<h4>Right:</h4>
+<code>Class.forName("org.fit.proxy.jdbc.ProxyDriver");<br>
+Connection proxyConnection = DriverManager.getConnection("jdbc:proxy:../properties/proxy.properties");<br>
+<br>
+proxyConnection.setReadOnly(true);<br>
+boolean readOnly = proxyConnection.isReadOnly(); //correct
+</code>
 
 <h2>Unsupported features:</h2>
 <p>Not written yet</p>
