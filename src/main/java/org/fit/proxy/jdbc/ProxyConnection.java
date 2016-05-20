@@ -50,6 +50,8 @@ public class ProxyConnection implements Connection {
 	private String catalog;
 	private boolean catalogSet = false;
 	
+	private Map<String, Class<?>> typeMap = null;
+	
 	
 	public ProxyConnection(Switcher s) throws SQLException {
 		switcher = s;
@@ -681,6 +683,52 @@ public class ProxyConnection implements Connection {
 		return res;
 	}
 	
+	@Override
+	public Map<String, Class<?>> getTypeMap() throws SQLException {
+		if (typeMap == null) {
+			throw new SQLException("Typemap not set!");
+		}
+		
+		return typeMap;
+	}
+
+	@Override
+	public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
+		List<ConnectionUnit> l = switcher.getConnectionList();
+		Map<ConnectionUnit, Map<String, Class<?>>> save = new HashMap<>();
+		ConnectionUnit u = null;
+		try {
+			for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
+				u = it.next();
+				Connection c = u.getConnection();
+				
+				save.put(u, c.getTypeMap());
+				
+				c.setTypeMap(map);
+			}
+			
+		} catch (SQLException e) {
+			String exc = new String();
+			
+			for (Entry<ConnectionUnit, Map<String, Class<?>>> entry : save.entrySet()) {
+				ConnectionUnit cu = entry.getKey();
+				Map<String, Class<?>> typeMap = entry.getValue();
+				
+				try {
+					cu.getConnection().setTypeMap(typeMap);
+				} catch (SQLException sqle) {
+					schemaSet = false;
+					
+					exc += "\nUnable to set back type map in connection " + cu.getName();
+				}
+			}
+			
+			throw new SQLException("Unable to change type map in connection " + u.getName() + ". Original message: " + e.getMessage() + exc);
+		}
+		
+		typeMap = map;
+	}
+	
 	//Unsupported
 	@Override
 	public void abort(Executor executor) throws SQLException {
@@ -706,16 +754,6 @@ public class ProxyConnection implements Connection {
 	@Override
 	public int getTransactionIsolation() throws SQLException {
 		throw new UnsupportedOperationException("Not implemented yet. (Method getTransactionIsolation)");
-	}
-
-	@Override
-	public Map<String, Class<?>> getTypeMap() throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet. (Method getTypeMap)");
-	}
-
-	@Override
-	public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet. (Method setTypeMap)");
 	}
 
 	@Override
