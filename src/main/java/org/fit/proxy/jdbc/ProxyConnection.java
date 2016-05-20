@@ -32,6 +32,7 @@ import java.util.concurrent.Executor;
  */
 public class ProxyConnection implements Connection {
 	private Switcher switcher;
+	private Properties properties;
 	
 	private int timeout = 0;
 	private boolean timeoutSet = false;
@@ -729,11 +730,47 @@ public class ProxyConnection implements Connection {
 		typeMap = map;
 	}
 	
-	//Unsupported
 	@Override
 	public void abort(Executor executor) throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet. (Method abort)");
+		List<ConnectionUnit> l = switcher.getConnectionList();
+		String exc = new String();
+		
+		for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
+			ConnectionUnit cu = it.next();
+			
+			try {
+				cu.getConnection().abort(executor);
+			} catch (SQLException e) {
+				if (! exc.isEmpty()) {
+					exc += '\n';
+				}
+				
+				exc += "Unable to abort connection: " + cu.getName() + ". Original message: " + e.getMessage();
+			}
+		}
+		
+		if (! exc.isEmpty()) {
+			throw new SQLException(exc);
+		}
 	}
+	
+	@Override
+	public String getClientInfo(String name) throws SQLException {
+		String res = properties.getProperty(name);
+		
+		if (res == null) {
+			throw new SQLException("Property " + name + "is not contained.");
+		}
+		
+		return res;
+	}
+
+	@Override
+	public Properties getClientInfo() throws SQLException {
+		return properties;
+	}
+	
+	//Unsupported
 	
 	@Override
 	public <T> T unwrap(Class<T> iface) throws SQLException {
@@ -797,16 +834,6 @@ public class ProxyConnection implements Connection {
 	public void setClientInfo(Properties properties)
 			throws SQLClientInfoException {
 		throw new UnsupportedOperationException("Not implemented yet. (Method setClientInfo)");
-	}
-
-	@Override
-	public String getClientInfo(String name) throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet. (Method getClientInfo)");
-	}
-
-	@Override
-	public Properties getClientInfo() throws SQLException {
-		throw new UnsupportedOperationException("Not implemented yet. (Method getClientInfo)");
 	}
 
 	@Override
