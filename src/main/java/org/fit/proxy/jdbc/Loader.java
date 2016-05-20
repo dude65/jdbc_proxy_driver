@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 /**
@@ -44,6 +46,7 @@ import java.util.Properties;
  * It is not allowed to have two database connections with the same name
  */
 public class Loader {
+	private final static Logger log = Logger.getLogger(ProxyConnection.class.getName());
 	
 	/**
 	 * This method is called to obtain object Switcher with a collection of database connections.
@@ -64,6 +67,8 @@ public class Loader {
 	 * @throws SQLException if data are not correct
 	 */
 	public static Switcher loadData(String propFile) throws SQLException {
+		log.log(Level.FINE, "loading properties data from file:" + propFile);
+		
 		Properties prop = new Properties();
 		InputStream is = null;
 		
@@ -72,13 +77,19 @@ public class Loader {
 			prop.load(is);
 			
 		} catch (IOException e) {
-			throw new SQLException("Properties data are missing");
+			String exc = "Properties data on path: " + propFile + " are not available.";
+			
+			log.log(Level.SEVERE, exc);
+			throw new SQLException(exc);
 		} finally {
 			if (is != null) {
 				try {
 					is.close();
 				} catch (IOException e) {
-					throw new SQLException("Unable to close properties file");
+					String exc = "Unable to close properties file on path:" + propFile;
+					
+					log.log(Level.SEVERE, exc);
+					throw new SQLException(exc);
 				}
 			}
 			
@@ -99,22 +110,41 @@ public class Loader {
 		String itemsString = prop.getProperty("items");
 		String exc = new String();
 		
+		log.log(Level.FINE, "Loading data from properties. Loading number of connections");
+		
 		if (itemsString == null) {
-			throw new SQLException("Unknown number of connections.");
+			exc = "Unknown number of connections.";
+			
+			log.log(Level.SEVERE, exc);
+			throw new SQLException(exc);
 		}
 		
-		int items = Integer.parseInt(itemsString);
+		int items;
 		
-		if (items <= 0) {
-			throw new SQLException("Invalid number of connections: " + items);
+		try {
+			items = Integer.parseInt(itemsString);
+			
+			if (items <= 0) {
+				throw new Exception();
+			}
+		} catch (Exception e) {
+			exc = "Invalid number of connections: " + itemsString;
+			
+			log.log(Level.SEVERE, exc);
+			throw new SQLException(exc);
 		}
+		
+		log.log(Level.FINE, "Adding connections to map");
 		
 		try {
 			for (int i = 0; i < items; i++) {
 				ConnectionUnit u = getUnit(prop, i);
 				
 				if (loaded.containsKey(u.getName())) {
-					throw new SQLException("The name of database " + u.getName() + " is duplicated");
+					exc = "The name of database " + u.getName() + " is duplicated";
+					
+					log.log(Level.SEVERE, "Failed when trying to add connection to map.");
+					throw new SQLException(exc);
 				}
 				
 				loaded.put(u.getName(), u);
@@ -122,6 +152,8 @@ public class Loader {
 		} catch (SQLException e) {
 			exc = e.getMessage();
 		}
+		
+		log.log(Level.FINE, "Adding connections to map completed. Resolving default connections");
 		
 		String defaultConn = prop.getProperty("default");
 		ConnectionUnit def = null;
@@ -134,20 +166,25 @@ public class Loader {
 					exc += '\n';
 				}
 				
+				log.log(Level.SEVERE, "Failed when trying to resolve default connection.");
 				exc += "Unable to resolve default connection";
 			}
 		}
 		
 		if (!exc.isEmpty()) {
+			log.log(Level.SEVERE, "Error occured when loading data from properties. Closing opened connections.");
+			
 			try {
 				closeOpenedConnections(loaded);
 			} catch (SQLException e) {
 				exc += '\n' + e.getMessage();
 			}
 			
+			log.log(Level.SEVERE, "Whole message: " + exc);
 			throw new SQLException(exc);
 		}
 		
+		log.log(Level.SEVERE, "Loding data from properties and connecting to databases was succesfull.");
 		return new Switcher(loaded, def, prop);
 	}
 	
@@ -159,6 +196,8 @@ public class Loader {
 	 * @throws SQLException - if data are incomplete or it is not possible to connect to a database, an exception is thrown 
 	 */
 	private static ConnectionUnit getUnit(Properties prop, int i) throws SQLException {
+		log.log(Level.INFO, "Connecting to database with number " + i);
+		
 		ConnectionUnit res = null;
 		
 		String driver = prop.getProperty("db" + i + "_driver");
@@ -174,21 +213,34 @@ public class Loader {
 				Connection c;
 				
 				if (user == null || password == null) {
+					log.log(Level.FINE, "Connecting to database " + i + " (" + name + "). User name or password is null, conecting by given url");
+					
 					c = DriverManager.getConnection(url);
 				} else {
+					log.log(Level.FINE, "Connecting to database " + i + " (" + name + ").");
 					c = DriverManager.getConnection(url, user, password);
 				}
 				
 				res = new ConnectionUnit(name, regexp, c);
 			} catch (SQLException e) {
-				throw new SQLException("Cannot open a connection to a " + name + " database. Original message: " + e.getMessage());
+				String exc = "Cannot open a connection to a " + name + " database. Original message: " + e.getMessage();
+				
+				log.log(Level.SEVERE, exc);
+				throw new SQLException(exc);
 			} catch (ClassNotFoundException e) {
-				throw new SQLException("The driver in connection " + name + " was not found.");
+				String exc = "The driver in connection " + name + " was not found. The class is: " + driver;
+				
+				log.log(Level.SEVERE, exc);
+				throw new SQLException(exc);
 			}
 		} else {
-			throw new SQLException("Unable to read data about db" + i + " connection.");
+			String exc = "Unable to read data about db" + i + " connection. Some properties are missing";
+			
+			log.log(Level.SEVERE, exc);
+			throw new SQLException(exc);
 		}
 		
+		log.log(Level.INFO, "Connecting to database with number " + i + " (" + name + ") was succesful.");
 		return res;
 	}
 	
@@ -201,8 +253,10 @@ public class Loader {
 		String exc = new String();
 		boolean error = false;
 		
-		for (Entry<String, ConnectionUnit> entry : connections.entrySet()) {
+		for (Entry<String, ConnectionUnit> entry : connections.entrySet()) {			
 			try {
+				log.log(Level.FINE, "Closing connection " + entry.getKey());
+				
 				entry.getValue().getConnection().close();
 			} catch (SQLException e) {
 				if (error) {
@@ -211,6 +265,7 @@ public class Loader {
 					error = true;
 				}
 				
+				log.log(Level.FINE, "Closing connection " + entry.getKey() + " failed.");
 				exc += "Unable to close connection " + entry.getKey();
 			}
 		}

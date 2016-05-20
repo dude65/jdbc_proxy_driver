@@ -1,6 +1,8 @@
 package org.fit.proxy.jdbc;
 
 import java.sql.Connection;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,6 +18,8 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
  */
 
 public class ConnectionUnit {
+	private final static Logger log = Logger.getLogger(ProxyDriver.class.getName());
+	
 	private Connection connection;
 	private Pattern pattern;
 	private String name;
@@ -24,6 +28,8 @@ public class ConnectionUnit {
 		this.name = name;
 		this.connection = connection;
 		pattern = Pattern.compile(regexp);
+		
+		log.log(Level.INFO, "Connection unit " + name + " set up.");
 	}
 	
 	public Connection getConnection() {
@@ -42,7 +48,11 @@ public class ConnectionUnit {
 	 */
 	public boolean matches(String regexp) {
 		Matcher m = pattern.matcher(regexp);
-		return m.find();
+		boolean res = m.find();
+		
+		log.log(Level.FINE, "Matching query (" + regexp + ") to " + name + " = " + res);
+		
+		return res;
 	}
 	
 	@Override
