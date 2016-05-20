@@ -48,7 +48,7 @@ public class TestLoader {
 		map.put("database2", u2);
 		map.put("database3", u3);
 		
-		Switcher s2 = new Switcher(map, null);
+		Switcher s2 = new Switcher(map, null, null);
 		
 		Assert.assertEquals(s1, s2);
 		
