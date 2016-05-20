@@ -4,7 +4,7 @@
 <title>Proxy driver - usage</title>
 <meta name="generator" content="Bluefish 2.2.7" >
 <meta name="author" content="Ondra" >
-<meta name="date" content="2016-05-17T15:59:25+0200" >
+<meta name="date" content="2016-05-20T16:56:23+0200" >
 <meta name="copyright" content="">
 <meta name="keywords" content="">
 <meta name="description" content="">
@@ -164,6 +164,8 @@ Connection proxyConnection = DriverManager.getConnection("jdbc:proxy:../properti
 proxyConnection.setReadOnly(true);<br>
 boolean readOnly = proxyConnection.isReadOnly(); //correct
 </code>
+
+<p>Other advices concerns transactions. Do not use them unless you are absolutely sure what you are doing! Make sure that all what you are doing in transactions is supported by all JDBC drivers.</p>
 
 <h2>Unsupported features:</h2>
 <p>Not written yet</p>

@@ -472,7 +472,7 @@ public class ProxyConnection implements Connection {
 		}
 		
 		Map<ConnectionUnit, Savepoint> saveList = ps.getSavepoints();
-		Map<ConnectionUnit, Savepoint> saved = new HashMap<>();
+		//Map<ConnectionUnit, Savepoint> saved = new HashMap<>();
 		ConnectionUnit u = null;
 		
 		try {
@@ -481,17 +481,17 @@ public class ProxyConnection implements Connection {
 				Connection c = u.getConnection();
 				Savepoint s = entry.getValue();
 				
-				saved.put(u, c.setSavepoint());
+				//saved.put(u, c.setSavepoint());
 				
 				c.rollback(s);
 			}
 		} catch (SQLException e) {
-			String rollBack = returnChanges(saved);
+			//String rollBack = returnChanges(saved);
 			
-			throw new SQLException("Unable rollback connection " + u.getName() + ". Original message: " + e.getMessage() + rollBack);
+			throw new SQLException("Unable rollback connection " + u.getName() + ". Original message: " + e.getMessage());
 		}
 		
-		releaseSavepoint(saved);
+		//releaseSavepoint(saved);
 		
 	}
 	

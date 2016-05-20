@@ -4,7 +4,7 @@
 <title>Proxy driver - usage</title>
 <meta name="generator" content="Bluefish 2.2.7" >
 <meta name="author" content="Ondra" >
-<meta name="date" content="2016-05-17T15:58:46+0200" >
+<meta name="date" content="2016-05-17T15:59:25+0200" >
 <meta name="copyright" content="">
 <meta name="keywords" content="">
 <meta name="description" content="">
@@ -138,7 +138,7 @@ proxy.unsetDefaultConnection();<br>
 try {<br>
 proxyStatement.executeQuery("INSERT INTO `homes` (`street`, `city`, `houseNumber`, `zipCode`) VALUES ('Svobodná', 'Svobodov', '1', '1')"); //will fail - query is not associated to any database connection<br>
 } catch (SQLException e) {<br>
-	System.err.println(e.getMessage());<br> //will be printed
+	System.err.println(e.getMessage()); //will be printed<br>
 }<br>
 //close connection<br>
 proxyStatement.close();<br>
