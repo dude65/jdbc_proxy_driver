@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.TreeMap;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -21,10 +22,12 @@ public class Switcher {
 	private ConnectionUnit defConnection;
 	boolean open = true;
 	private List<Connection> failedList = new LinkedList<>();
+	private Properties properties;
 	
-	public Switcher(Map<String, ConnectionUnit> connectList, ConnectionUnit defConnection) {
+	public Switcher(Map<String, ConnectionUnit> connectList, ConnectionUnit defConnection, Properties properties) {
 		this.connectList = connectList;
 		this.defConnection = defConnection;
+		this.properties = properties;
 	}
 	/**
 	 * This method is getter for all connection units
@@ -40,6 +43,10 @@ public class Switcher {
 		}
 		
 		return defConnection;
+	}
+	
+	public Properties getProperties() {
+		return properties;
 	}
 	
 	/**

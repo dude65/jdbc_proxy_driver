@@ -32,7 +32,6 @@ import java.util.concurrent.Executor;
  */
 public class ProxyConnection implements Connection {
 	private Switcher switcher;
-	private Properties properties;
 	
 	private int timeout = 0;
 	private boolean timeoutSet = false;
@@ -756,7 +755,7 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public String getClientInfo(String name) throws SQLException {
-		String res = properties.getProperty(name);
+		String res = switcher.getProperties().getProperty(name);
 		
 		if (res == null) {
 			throw new SQLException("Property " + name + "is not contained.");
@@ -767,7 +766,7 @@ public class ProxyConnection implements Connection {
 
 	@Override
 	public Properties getClientInfo() throws SQLException {
-		return properties;
+		return switcher.getProperties();
 	}
 	
 	//Unsupported

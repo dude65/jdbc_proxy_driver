@@ -45,6 +45,8 @@ public class ProxyDriver implements Driver{
 		
 		if (StringUtils.startsWith(url, prefix)) {
 			res = StringUtils.substring(url, prefix.length());
+		} else {
+			throw new SQLException("Error while parsing url.");
 		}
 		
 		return res;
@@ -54,7 +56,11 @@ public class ProxyDriver implements Driver{
 	public boolean acceptsURL(String url) throws SQLException {
 		boolean res;
 		
-		url = parseUrl(url);
+		try {
+			url = parseUrl(url);
+		} catch (SQLException e) {
+			url = null;
+		}
 		
 		try {
 			Paths.get(url);

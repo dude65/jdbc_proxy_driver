@@ -148,7 +148,7 @@ public class Loader {
 			throw new SQLException(exc);
 		}
 		
-		return new Switcher(loaded, def);
+		return new Switcher(loaded, def, prop);
 	}
 	
 	/**
