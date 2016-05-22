@@ -184,7 +184,7 @@ public class Loader {
 			throw new SQLException(exc);
 		}
 		
-		log.log(Level.SEVERE, "Loding data from properties and connecting to databases was succesfull.");
+		log.log(Level.INFO, "Loding data from properties and connecting to databases was succesfull.");
 		return new Switcher(loaded, def, prop);
 	}
 	
