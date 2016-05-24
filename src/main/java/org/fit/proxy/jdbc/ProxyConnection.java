@@ -22,15 +22,19 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.Executor;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * 
  * @author Ondřej Marek
  * 
- * This class is the implementation of the Driver. It's implemented by Connection interface
+ * This class is the implementation of the Proxy Connection
  *
  */
 public class ProxyConnection implements Connection {
+	private final static Logger log = Logger.getLogger(ProxyDriver.class.getName());
+	
 	private Switcher switcher;
 	
 	private int timeout = 0;
@@ -58,6 +62,8 @@ public class ProxyConnection implements Connection {
 		
 		setAutoCommit(true);
 		setReadOnly(false);
+		
+		log.log(Level.INFO, "Proxy connection established.");
 	}
 	
 	/**
@@ -103,24 +109,32 @@ public class ProxyConnection implements Connection {
 	 * @param map of savepoints
 	 * @return error message of unchanged connections
 	 */
-	private String returnChanges(Map<ConnectionUnit, Savepoint> save) {
+	/*private String returnChanges(Map<ConnectionUnit, Savepoint> save) {
 		String res = new String();
+		
+		log.log(Level.FINE, "Unmaking changes");
 		
 		for (Entry<ConnectionUnit, Savepoint> entry : save.entrySet()) {
 			ConnectionUnit rollUnit = entry.getKey();
 			Connection c = rollUnit.getConnection();
 			Savepoint s = entry.getValue();
 			
-			try {	
+			try {
+				log.log(Level.FINE, "Unmaking changes in connection " + rollUnit.getName());
 				c.rollback(s);
 				c.releaseSavepoint(s);
 			} catch (SQLException e2) {
-				res += "\nUnable to return changes to former value in connection " + rollUnit.getName() + ". Original message: " + e2.getMessage();
+				String exc = "Unable to return changes to former value in connection " + rollUnit.getName() + ". Original message: " + e2.getMessage();
+				
+				log.log(Level.SEVERE, exc);
+				res += '\n' + exc;
 			}
 		}
 		
+		log.log(Level.FINE, "Unmaking changes done.");
+		
 		return res;
-	}
+	}*/
 	
 	/**
 	 * Releases all savepoints that were used during transactions
@@ -132,9 +146,13 @@ public class ProxyConnection implements Connection {
 		String exc = new String();
 		boolean first = true;
 		
+		log.log(Level.FINE, "Releasing savepoints");
+		
 		for (Entry<ConnectionUnit, Savepoint> entry : save.entrySet()) {
 			ConnectionUnit u = entry.getKey();
 			Savepoint s = entry.getValue();
+			
+			log.log(Level.FINE, "Releasing savepoint with ID = " + s.getSavepointId() + "in connection " + u.getName());
 			
 			try {
 				u.getConnection().releaseSavepoint(s);
@@ -145,7 +163,10 @@ public class ProxyConnection implements Connection {
 					exc += '\n';
 				}
 				
-				exc += "Unable to release savepoint to connection " + u.getName() + ". Original message: " + e.getMessage();
+				String message = "Unable to release savepoint to connection " + u.getName() + ". Original message: " + e.getMessage();
+				
+				log.log(Level.SEVERE, message);
+				exc += message;
 			}
 			
 		}
@@ -155,7 +176,7 @@ public class ProxyConnection implements Connection {
 		}
 	}
 	
-	public Switcher getSwitcher() {
+	public Switcher getSwitcher() {		
 		return switcher;
 	}
 	
@@ -163,54 +184,63 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public PreparedStatement prepareStatement(String sql) throws SQLException {
+		log.log(Level.FINE, "Prepare statement, sql(" + sql + ")");
 		Connection c = switcher.getConnection(sql);
 		return c.prepareStatement(sql);
 	}
 
 	@Override
 	public CallableStatement prepareCall(String sql) throws SQLException {
+		log.log(Level.FINE, "Prepare call, sql(" + sql + ")");
 		Connection c = switcher.getConnection(sql);
 		return c.prepareCall(sql);
 	}
 	
 	@Override
 	public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
+		log.log(Level.FINE, "Prepare statement, sql(" + sql + "), resultSetType = " + resultSetType + ", resultSetConcurrency = " + resultSetConcurrency);
 		Connection c = switcher.getConnection(sql);
 		return c.prepareStatement(sql, resultSetType, resultSetConcurrency);
 	}
 
 	@Override
 	public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
+		log.log(Level.FINE, "Prepare call, sql(" + sql + "), resultSetType = " + resultSetType + ", resultSetConcurrency = " + resultSetConcurrency);
 		Connection c = switcher.getConnection(sql);
 		return c.prepareCall(sql, resultSetType, resultSetConcurrency);
 	}
 	
 	@Override
 	public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
+		log.log(Level.FINE, "Prepare statement, sql(" + sql + "), resultSetType = " + resultSetType + ", resultSetConcurrency = " + resultSetConcurrency + ", resultSetHoldability = " + resultSetHoldability);		
 		Connection c = switcher.getConnection(sql);
 		return c.prepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
 	}
 
 	@Override
 	public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
+		log.log(Level.FINE, "Prepare call, sql(" + sql + "), resultSetType = " + resultSetType + ", resultSetConcurrency = " + resultSetConcurrency + ", resultSetHoldability = " + resultSetHoldability);
 		Connection c = switcher.getConnection(sql);
 		return c.prepareCall(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
 	}
 
 	@Override
 	public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) throws SQLException {
+		log.log(Level.FINE, "Prepare statement, sql(" + sql + "), autoGeneratedKeys = " + autoGeneratedKeys);
 		Connection c = switcher.getConnection(sql);
 		return c.prepareStatement(sql, autoGeneratedKeys);
 	}
 
 	@Override
 	public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException {
+		log.log(Level.FINE, "Prepare statement, sql(" + sql + "), columnIndexes = " + columnIndexes);
 		Connection c = switcher.getConnection(sql);
 		return c.prepareStatement(sql, columnIndexes);
 	}
 
 	@Override
 	public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
+		log.log(Level.FINE, "Prepare statement, sql(" + sql + "), columnNames = " + columnNames);
 		Connection c = switcher.getConnection(sql);
 		return c.prepareStatement(sql, columnNames);
 	}
@@ -227,6 +257,7 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public String nativeSQL(String sql) throws SQLException {
+		log.log(Level.FINE, "Getting native sql(" + sql + ")");
 		Connection c = switcher.getConnection(sql);
 		return c.nativeSQL(sql);
 	}
@@ -251,17 +282,24 @@ public class ProxyConnection implements Connection {
 		List<ConnectionUnit> l = switcher.getConnectionList();
 		Map<ConnectionUnit, Integer> save = new HashMap<>();
 		ConnectionUnit u = null;
+		
+		log.log(Level.INFO, "Setting network timeout, miliseconds = " + milliseconds);
 		try {
 			for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
 				u = it.next();
 				Connection c = u.getConnection();
 				
+				log.log(Level.FINE, "Saving network timeout in connection " + u.getName());
 				save.put(u, c.getNetworkTimeout());
+				
+				log.log(Level.FINE, "Setting network timeout in connection " + u.getName());
 				c.setNetworkTimeout(executor, milliseconds);
 			}
 			
 		} catch (SQLException e) {
 			String exc = new String();
+			
+			log.log(Level.SEVERE, "An error occured when setting network timeout in connection " + u.getName() + ". Setting values back in other connections.");
 			
 			for (Entry<ConnectionUnit, Integer> entry : save.entrySet()) {
 				ConnectionUnit cu = entry.getKey();
@@ -271,12 +309,21 @@ public class ProxyConnection implements Connection {
 					cu.getConnection().setNetworkTimeout(executor, time);
 				} catch (SQLException sqle) {
 					timeoutSet = false;
-					exc += "\nUnable to set back network timeout in connection " + cu.getName() + " to value: " + time;
+					
+					String message = "Unable to set back network timeout in connection " + cu.getName() + " to value: " + time;
+					
+					log.log(Level.SEVERE, message);
+					exc += "\n" + message;
 				}
 			}
 			
-			throw new SQLException("Unable to change network timeout in connection " + u.getName() + ". Original message: " + e.getMessage() + exc);
+			String message = "Unable to change network timeout in connection " + u.getName() + ". Original message: " + e.getMessage() + exc;
+			
+			log.log(Level.SEVERE, "Whole message: " + message);
+			throw new SQLException(message);
 		}
+		
+		log.log(Level.INFO, "Network timeout was set successfully, miliseconds = " + milliseconds);
 		
 		timeoutSet = true;
 		timeout = milliseconds;
@@ -286,8 +333,14 @@ public class ProxyConnection implements Connection {
 
 	@Override
 	public int getNetworkTimeout() throws SQLException {
+		log.log(Level.FINE, "Getting network timeout.");
+		
 		if (!timeoutSet) {
-			throw new SQLException("Timeout has not been set yet!");
+			String exc = "Timeout has not been set yet!";
+			
+			log.log(Level.SEVERE, exc);
+			
+			throw new SQLException(exc);
 		}
 		
 		return timeout;
@@ -295,8 +348,13 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public boolean isValid(int timeout) throws SQLException {
+		log.log(Level.FINE, "Checking whether timeout " + timeout + " milliseconds is valid");
+		
 		if (!timeoutSet) {
-			throw new SQLException("Timeout has not been set yet!");
+			String exc = "Timeout has not been set yet!";
+			
+			log.log(Level.FINE, exc);
+			throw new SQLException(exc);
 		}
 		
 		return timeout <= this.timeout;
@@ -307,17 +365,25 @@ public class ProxyConnection implements Connection {
 		List<ConnectionUnit> l = switcher.getConnectionList();
 		Map<ConnectionUnit, Boolean> save = new HashMap<>();
 		ConnectionUnit u = null;
+		
+		log.log(Level.INFO, "Setting auto commit to value = " + autoCommit);
+		
 		try {
 			for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
 				u = it.next();
 				Connection c = u.getConnection();
 				
+				log.log(Level.FINE, "Saving auto commit in connection " + u.getName());
 				save.put(u, c.getAutoCommit());
+				
+				log.log(Level.FINE, "Saving auto commit in connection " + u.getName());
 				c.setAutoCommit(autoCommit);
 			}
 			
 		} catch (SQLException e) {
 			String exc = new String();
+			
+			log.log(Level.SEVERE, "Error occured when setting auto commit in connection " + u.getName() + ". Setting auto commit values back.");
 			
 			for (Entry<ConnectionUnit, Boolean> entry : save.entrySet()) {
 				ConnectionUnit cu = entry.getKey();
@@ -327,16 +393,27 @@ public class ProxyConnection implements Connection {
 					cu.getConnection().setAutoCommit(commit);
 				} catch (SQLException sqle) {
 					autoCommitSet = false;
-					exc += "\nUnable to set back auto commit in connection " + cu.getName() + " to value: " + commit;
+					
+					String message = "Unable to set back auto commit in connection " + cu.getName() + " to value: " + commit;
+					
+					log.log(Level.SEVERE, message);
+					exc += "\n" + message;
 				}
 			}
 			
-			throw new SQLException("Unable to change auto commit mode in connection " + u.getName() + ". Original message: " + e.getMessage() + exc);
+			
+			String message = "Unable to change auto commit mode in connection " + u.getName() + ". Original message: " + e.getMessage() + exc;
+			
+			log.log(Level.SEVERE, "Whole message: " + message);
+			throw new SQLException(message);
 		}
 		
 		if (!autoCommit) {
+			log.log(Level.FINE, "Setting savepoint.");
 			currTransaction = (ProxySavepoint) setSavepoint();
 		}
+		
+		log.log(Level.INFO, "Setting auto commit to value " + autoCommit + " was successful.");
 		
 		autoCommitSet = true;
 		this.autoCommit = autoCommit;
@@ -345,8 +422,13 @@ public class ProxyConnection implements Connection {
 
 	@Override
 	public boolean getAutoCommit() throws SQLException {
+		log.log(Level.FINE, "Getting auto commit");
+		
 		if (!autoCommitSet) {
-			throw new SQLException("Auto commit has not been set yet!");
+			String exc = "Auto commit has not been set yet!";
+			
+			log.log(Level.SEVERE, exc);
+			throw new SQLException(exc);
 		}
 		
 		return autoCommit;
@@ -355,24 +437,31 @@ public class ProxyConnection implements Connection {
 	@Override
 	public void commit() throws SQLException {
 		List<ConnectionUnit> l = switcher.getConnectionList();
-		Map<ConnectionUnit, Savepoint> save = new HashMap<>();
+		//Map<ConnectionUnit, Savepoint> save = new HashMap<>();
 		ConnectionUnit u = null;
+		
+		log.log(Level.INFO, "Commiting changes.");
+		
 		try {
 			for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
 				u = it.next();
 				Connection c = u.getConnection();
 				
-				save.put(u, c.setSavepoint());
+				//save.put(u, c.setSavepoint());
+				
+				log.log(Level.FINE, "Commiting connection: " + u.getName());
 				c.commit();
 			}
 			
 		} catch (SQLException e) {
-			String rollBack = returnChanges(save);
+			//String rollBack = returnChanges(save);
+			String exc = "Unable to commit connection " + u.getName() + ". Original message: " + e.getMessage();
 			
-			throw new SQLException("Unable to commit connection " + u.getName() + ". Original message: " + e.getMessage() + rollBack);
+			log.log(Level.SEVERE, exc);
+			throw new SQLException(exc);
 		}
 		
-		releaseSavepoint(save);
+		//releaseSavepoint(save);
 	}
 	
 	@Override
@@ -380,18 +469,25 @@ public class ProxyConnection implements Connection {
 		List<ConnectionUnit> l = switcher.getConnectionList();
 		Map<ConnectionUnit, Boolean> save = new HashMap<>();
 		ConnectionUnit u = null;
+		
+		log.log(Level.INFO, "Setting connection to read only = " + readOnly);
+		
 		try {
 			for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
 				u = it.next();
 				Connection c = u.getConnection();
 				
+				log.log(Level.FINE, "Saving read only indication in connection " + u.getName());
 				save.put(u, c.isReadOnly());
 				
+				log.log(Level.FINE, "Setting read only indication in connection " + u.getName());
 				c.setReadOnly(readOnly);
 			}
 			
 		} catch (SQLException e) {
 			String exc = new String();
+			
+			log.log(Level.SEVERE, "Setting read only indication = " + readOnly +" failed in connection " + u.getName());
 			
 			for (Entry<ConnectionUnit, Boolean> entry : save.entrySet()) {
 				ConnectionUnit cu = entry.getKey();
@@ -402,11 +498,17 @@ public class ProxyConnection implements Connection {
 				} catch (SQLException sqle) {
 					readOnlySet = false;
 					
-					exc += "\nUnable to set back read only in connection " + cu.getName() + " to value: " + ro;
+					String message = "Unable to set back read only in connection " + cu.getName() + " to value: " + ro;
+					
+					log.log(Level.SEVERE, message);
+					exc += "\n" + message;
 				}
 			}
 			
-			throw new SQLException("Unable to set read only connection " + u.getName() + ". Original message: " + e.getMessage() + exc);
+			String message = "Unable to set read only connection " + u.getName() + ". Original message: " + e.getMessage() + exc;
+			
+			log.log(Level.SEVERE, "Whole message: " + message);
+			throw new SQLException(message);
 		}
 		
 		readOnlySet = true;
@@ -416,8 +518,13 @@ public class ProxyConnection implements Connection {
 
 	@Override
 	public boolean isReadOnly() throws SQLException {
+		log.log(Level.FINE, "Checking whether connection is read only.");
+		
 		if (!readOnlySet) {
-			throw new SQLException("The value read only has not been set yet!");
+			String exc = "The value read only has not been set yet!";
+			
+			log.log(Level.SEVERE, exc);
+			throw new SQLException(exc);
 		}
 		
 		return readOnly;
@@ -433,18 +540,38 @@ public class ProxyConnection implements Connection {
 		List<ConnectionUnit> l = switcher.getConnectionList();
 		Map<ConnectionUnit, Savepoint> save = new HashMap<>();
 		ConnectionUnit u = null;
+		
+		log.log(Level.INFO, "Setting savepoint with name = " + name);
+		
+		
 		try {
 			for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
 				u = it.next();
 				Connection c = u.getConnection();
 				
+				log.log(Level.FINE, "Setting savepoint to connection " + u.getName());
 				save.put(u, c.setSavepoint());
 			}
 			
 		} catch (SQLException e) {
-			String rollBack = returnChanges(save);
+			//String rollBack = returnChanges(save);
+			String rollBack = new String();
 			
-			throw new SQLException("Unable to set read only connection " + u.getName() + ". Original message: " + e.getMessage() + rollBack);
+			log.log(Level.SEVERE, "Setting savepoint failed in connection " + u.getName() + ". Releasing savepoints..");
+			
+			try {
+				releaseSavepoint(save);
+			} catch (SQLException sqle) {
+				rollBack = sqle.getMessage();
+			}
+			
+			currTransaction = null;
+			
+			String exc = "Unable to set savepoint " + u.getName() + ". Original message: " + e.getMessage() + rollBack;
+			
+			
+			log.log(Level.SEVERE, "Whole message: " + exc);
+			throw new SQLException(exc);
 		}
 		
 		ProxySavepoint res = new ProxySavepoint(name, save);
@@ -455,8 +582,13 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public void rollback() throws SQLException {
+		log.log(Level.INFO, "Doing rollback.");
+		
 		if (currTransaction == null) {
-			throw new SQLException("No available savepoints!");
+			String exc = "No available savepoints!";
+			
+			log.log(Level.SEVERE, exc);
+			throw new SQLException(exc);
 		}
 		
 		rollback(currTransaction);
@@ -467,10 +599,15 @@ public class ProxyConnection implements Connection {
 	public void rollback(Savepoint savepoint) throws SQLException {
 		ProxySavepoint ps;
 		
+		log.log(Level.INFO, "Doing rollback with savepoint, ID = " + savepoint.getSavepointId() + ", name = " + savepoint.getSavepointName());
+		
 		try {
 			ps = (ProxySavepoint) savepoint;
 		} catch (ClassCastException e) {
-			throw new SQLException("Invalid savepoint:  ID = " + savepoint.getSavepointId() + ", name = " + savepoint.getSavepointName());
+			String exc = "Invalid savepoint:  ID = " + savepoint.getSavepointId() + ", name = " + savepoint.getSavepointName();
+			
+			log.log(Level.SEVERE, exc);
+			throw new SQLException(exc);
 		}
 		
 		Map<ConnectionUnit, Savepoint> saveList = ps.getSavepoints();
@@ -485,12 +622,15 @@ public class ProxyConnection implements Connection {
 				
 				//saved.put(u, c.setSavepoint());
 				
+				log.log(Level.FINE, "Doing rollback in connection " + u.getName());
 				c.rollback(s);
 			}
 		} catch (SQLException e) {
 			//String rollBack = returnChanges(saved);
+			String exc = "Unable rollback connection " + u.getName() + ". Original message: " + e.getMessage();
 			
-			throw new SQLException("Unable rollback connection " + u.getName() + ". Original message: " + e.getMessage());
+			log.log(Level.SEVERE, exc);
+			throw new SQLException(exc);
 		}
 		
 		//releaseSavepoint(saved);
@@ -501,10 +641,15 @@ public class ProxyConnection implements Connection {
 	public void releaseSavepoint(Savepoint savepoint) throws SQLException {
 		ProxySavepoint ps;
 		
+		log.log(Level.INFO, "Releasing savepoint, ID = " + savepoint.getSavepointId() + ", name = " + savepoint.getSavepointName());
+		
 		try {
 			ps = (ProxySavepoint) savepoint;
 		} catch (ClassCastException e) {
-			throw new SQLException("Invalid savepoint:  ID = " + savepoint.getSavepointId() + ", name = " + savepoint.getSavepointName());
+			String exc = "Invalid savepoint:  ID = " + savepoint.getSavepointId() + ", name = " + savepoint.getSavepointName();
+			
+			log.log(Level.SEVERE, exc);
+			throw new SQLException(exc);
 		}
 		
 		Map<ConnectionUnit, Savepoint> saveList = ps.getSavepoints();
@@ -517,28 +662,36 @@ public class ProxyConnection implements Connection {
 			Connection c = u.getConnection();
 			Savepoint s = entry.getValue();
 			
+			log.log(Level.FINE, "Releasing savepoint in connection " + u.getName());
 			try {
 				c.releaseSavepoint(s);
 			} catch (SQLException e) {
+				
 				if (first) {
 					first = false;
 				} else {
 					errMessage += '\n';
 				}
 				
-				errMessage += "Cannot release savepoint in connection " + u.getName() + ". Original message: " + e.getMessage();
+				String exc = "Cannot release savepoint in connection " + u.getName() + ". Original message: " + e.getMessage();
+				
+				log.log(Level.SEVERE, exc);
+				errMessage += exc;
 			}
 			
 			
 		}
 		
 		if (! errMessage.isEmpty()) {
+			log.log(Level.SEVERE, "Whole message: " + errMessage);
 			throw new SQLException(errMessage);
 		}
 	}
 	
 	@Override
 	public DatabaseMetaData getMetaData() throws SQLException {
+		log.log(Level.FINE, "Getting database info from default connection");
+		
 		Connection c = switcher.getDefaultConnection().getConnection();
 		
 		return c.getMetaData();
@@ -549,17 +702,25 @@ public class ProxyConnection implements Connection {
 		List<ConnectionUnit> l = switcher.getConnectionList();
 		Map<ConnectionUnit, String> save = new HashMap<>();
 		ConnectionUnit u = null;
+		
+		log.log(Level.INFO, "Setting catalog to value = " + catalog);
+		
 		try {
 			for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
 				u = it.next();
 				Connection c = u.getConnection();
 				
+				log.log(Level.FINE, "Saving catalog in connection " + u.getName());
 				save.put(u, c.getCatalog());
+				
+				log.log(Level.FINE, "Setting catalog in connection " + u.getName());
 				c.setCatalog(catalog);
 			}
 			
 		} catch (SQLException e) {
 			String exc = new String();
+			
+			log.log(Level.SEVERE, "Setting catalog in connection " + u.getName() + " failed. Setting catalog back.");
 			
 			for (Entry<ConnectionUnit, String> entry : save.entrySet()) {
 				ConnectionUnit cu = entry.getKey();
@@ -570,11 +731,17 @@ public class ProxyConnection implements Connection {
 				} catch (SQLException sqle) {
 					catalogSet = false;
 					
-					exc += "\nUnable to set back catalog in connection " + cu.getName() + " to value: " + cat;
+					String message = "Unable to set back catalog in connection " + cu.getName() + " to value: " + cat;
+					
+					log.log(Level.SEVERE, message);
+					exc += "\n" + message;
 				}
 			}
 			
-			throw new SQLException("Unable to change catalog in connection " + u.getName() + ". Original message: " + e.getMessage() + exc);
+			String message = "Unable to change catalog in connection " + u.getName() + ". Original message: " + e.getMessage() + exc;
+			
+			log.log(Level.SEVERE, "Whole message: " + message);
+			throw new SQLException(message);
 		}
 		
 		
@@ -584,8 +751,13 @@ public class ProxyConnection implements Connection {
 
 	@Override
 	public String getCatalog() throws SQLException {
+		log.log(Level.FINE, "Getting catalog..");
+		
 		if (!catalogSet) {
-			throw new SQLException("Database catalog has not been set yet!");
+			String exc = "Database catalog has not been set yet!";
+			
+			log.log(Level.SEVERE, exc);
+			throw new SQLException(exc);
 		}
 		
 		return catalog;
@@ -596,17 +768,24 @@ public class ProxyConnection implements Connection {
 		List<ConnectionUnit> l = switcher.getConnectionList();
 		Map<ConnectionUnit, String> save = new HashMap<>();
 		ConnectionUnit u = null;
+		
+		log.log(Level.INFO, "Setting schema to value = " + schema);
+		
 		try {
 			for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
 				u = it.next();
 				Connection c = u.getConnection();
 				
+				log.log(Level.FINE, "Saving schema in connection " + u.getName());
 				save.put(u, c.getSchema());
+				
+				log.log(Level.FINE, "Setting schema in connection " + u.getName());
 				c.setSchema(schema);
 			}
 			
 		} catch (SQLException e) {
 			String exc = new String();
+			log.log(Level.SEVERE, "Setting schema failed in connection " + u.getName());
 			
 			for (Entry<ConnectionUnit, String> entry : save.entrySet()) {
 				ConnectionUnit cu = entry.getKey();
@@ -617,11 +796,15 @@ public class ProxyConnection implements Connection {
 				} catch (SQLException sqle) {
 					schemaSet = false;
 					
-					exc += "\nUnable to set back schema in connection " + cu.getName() + " to value: " + sch;
+					String message = "Unable to set back schema in connection " + cu.getName() + " to value: " + sch;
+					exc += "\n" + message;
 				}
 			}
 			
-			throw new SQLException("Unable to change schema in connection " + u.getName() + ". Original message: " + e.getMessage() + exc);
+			String message = "Unable to change schema in connection " + u.getName() + ". Original message: " + e.getMessage() + exc;
+			
+			log.log(Level.SEVERE, "Whole message: " + message);
+			throw new SQLException(message);
 		}
 		
 		
@@ -631,8 +814,13 @@ public class ProxyConnection implements Connection {
 
 	@Override
 	public String getSchema() throws SQLException {
+		log.log(Level.FINE, "Getting schema");
+		
 		if (!schemaSet) {
-			throw new SQLException("Database schema has not been set yet!");
+			String exc = "Database schema has not been set yet!";
+			
+			log.log(Level.SEVERE, exc);
+			throw new SQLException(exc);
 		}
 		
 		return schema;
@@ -643,9 +831,12 @@ public class ProxyConnection implements Connection {
 		List<ConnectionUnit> l = switcher.getConnectionList();
 		String exc = new String();
 		
+		log.log(Level.INFO, "Clearing warnings");
+		
 		for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
 			ConnectionUnit cu = it.next();
 			
+			log.log(Level.FINE, "Clearing warnings in connection " + cu.getName());
 			try {
 				cu.getConnection().clearWarnings();
 			} catch (SQLException e) {
@@ -653,13 +844,19 @@ public class ProxyConnection implements Connection {
 					exc += '\n';
 				}
 				
-				exc += "Unable to clear warnings in connection: " + cu.getName() + ". Original message: " + e.getMessage();
+				String message = "Unable to clear warnings in connection: " + cu.getName() + ". Original message: " + e.getMessage();
+				
+				log.log(Level.SEVERE, message);
+				exc += message;
 			}
 		}
 		
 		if (! exc.isEmpty()) {
+			log.log(Level.SEVERE, "Whole message:" + exc);
 			throw new SQLException(exc);
 		}
+		
+		log.log(Level.INFO, "Warnings cleared successfully.");
 	}
 	
 	@Override
@@ -668,14 +865,19 @@ public class ProxyConnection implements Connection {
 		
 		ConnectionUnit conn = null;
 		
+		log.log(Level.FINE, "Getting warnings from default connetion");
+		
 		try {
 			conn = switcher.getDefaultConnection();
 			res = conn.getConnection().getWarnings();
 		} catch (SQLException e) {
+			log.log(Level.FINE, "Default connection does not exists");
 		}
 		
 		for (Iterator<ConnectionUnit> it = switcher.getConnectionList().iterator(); res != null && it.hasNext();) {
 			conn = it.next();
+			
+			log.log(Level.FINE, "Getting warnings from connection " + conn.getName());
 			
 			res = conn.getConnection().getWarnings();
 		}
@@ -685,8 +887,13 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public Map<String, Class<?>> getTypeMap() throws SQLException {
+		log.log(Level.FINE, "Getting type map");
+		
 		if (typeMap == null) {
-			throw new SQLException("Typemap not set!");
+			String exc = "Typemap is not set!";
+			
+			log.log(Level.SEVERE, exc);
+			throw new SQLException(exc);
 		}
 		
 		return typeMap;
@@ -697,18 +904,24 @@ public class ProxyConnection implements Connection {
 		List<ConnectionUnit> l = switcher.getConnectionList();
 		Map<ConnectionUnit, Map<String, Class<?>>> save = new HashMap<>();
 		ConnectionUnit u = null;
+		
+		log.log(Level.INFO, "Setting type map");
 		try {
 			for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
 				u = it.next();
 				Connection c = u.getConnection();
 				
+				log.log(Level.FINE, "Saving type map in connection " + u.getName());
 				save.put(u, c.getTypeMap());
 				
+				log.log(Level.FINE, "Setting type map in connection " + u.getName());
 				c.setTypeMap(map);
 			}
 			
 		} catch (SQLException e) {
 			String exc = new String();
+			
+			log.log(Level.SEVERE, "Setting type map failed in connection " + u.getName() + ". Setting type mapas back.");
 			
 			for (Entry<ConnectionUnit, Map<String, Class<?>>> entry : save.entrySet()) {
 				ConnectionUnit cu = entry.getKey();
@@ -719,12 +932,20 @@ public class ProxyConnection implements Connection {
 				} catch (SQLException sqle) {
 					schemaSet = false;
 					
-					exc += "\nUnable to set back type map in connection " + cu.getName();
+					String message = "Unable to set back type map in connection " + cu.getName();
+					
+					log.log(Level.SEVERE, message);
+					exc += "\n" + message;
 				}
 			}
 			
-			throw new SQLException("Unable to change type map in connection " + u.getName() + ". Original message: " + e.getMessage() + exc);
+			String message = "Unable to change type map in connection " + u.getName() + ". Original message: " + e.getMessage() + exc;
+			
+			log.log(Level.SEVERE, "Whole message: " + message);
+			throw new SQLException(message);
 		}
+		
+		log.log(Level.INFO, "Type map was changed successfully.");
 		
 		typeMap = map;
 	}
@@ -734,8 +955,12 @@ public class ProxyConnection implements Connection {
 		List<ConnectionUnit> l = switcher.getConnectionList();
 		String exc = new String();
 		
+		log.log(Level.INFO, "Aborting...");
+		
 		for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
 			ConnectionUnit cu = it.next();
+			
+			log.log(Level.FINE, "Aborting connection " + cu.getName());
 			
 			try {
 				cu.getConnection().abort(executor);
@@ -744,21 +969,30 @@ public class ProxyConnection implements Connection {
 					exc += '\n';
 				}
 				
-				exc += "Unable to abort connection: " + cu.getName() + ". Original message: " + e.getMessage();
+				String message = "Unable to abort connection: " + cu.getName() + ". Original message: " + e.getMessage();
+				
+				log.log(Level.SEVERE, message);
+				exc += message;
 			}
 		}
 		
 		if (! exc.isEmpty()) {
+			log.log(Level.SEVERE, "Whole message: " + exc);
 			throw new SQLException(exc);
 		}
 	}
 	
 	@Override
 	public String getClientInfo(String name) throws SQLException {
+		log.log(Level.FINE, "Getting proxy property named " + name);
+		
 		String res = switcher.getProperties().getProperty(name);
 		
 		if (res == null) {
-			throw new SQLException("Property " + name + "is not contained.");
+			String exc = "Property " + name + "is not contained.";
+			
+			log.log(Level.SEVERE, exc);
+			throw new SQLException(exc);
 		}
 		
 		return res;
@@ -766,84 +1000,99 @@ public class ProxyConnection implements Connection {
 
 	@Override
 	public Properties getClientInfo() throws SQLException {
-		return switcher.getProperties();
+		log.log(Level.FINE, "Getting proxy properties");
+		return new Properties(switcher.getProperties());
 	}
 	
 	//Unsupported
 	
 	@Override
 	public <T> T unwrap(Class<T> iface) throws SQLException {
+		log.log(Level.SEVERE, "Unsupported Operation.");
 		throw new UnsupportedOperationException("Not implemented yet. (Method unwrap)");
 	}
 
 	@Override
 	public boolean isWrapperFor(Class<?> iface) throws SQLException {
+		log.log(Level.SEVERE, "Unsupported Operation.");
 		throw new UnsupportedOperationException("Not implemented yet. (Method isWrapperFor)");
 	}
 
 	@Override
 	public void setTransactionIsolation(int level) throws SQLException {
+		log.log(Level.SEVERE, "Unsupported Operation.");
 		throw new UnsupportedOperationException("Not implemented yet. (Method setTransactionIsolation)");
 		
 	}
 
 	@Override
 	public int getTransactionIsolation() throws SQLException {
+		log.log(Level.SEVERE, "Unsupported Operation.");
 		throw new UnsupportedOperationException("Not implemented yet. (Method getTransactionIsolation)");
 	}
 
 	@Override
 	public void setHoldability(int holdability) throws SQLException {
+		log.log(Level.SEVERE, "Unsupported Operation.");
 		throw new UnsupportedOperationException("Not implemented yet. (Method setHoldability)");
 	}
 
 	@Override
 	public int getHoldability() throws SQLException {
+		log.log(Level.SEVERE, "Unsupported Operation.");
 		throw new UnsupportedOperationException("Not implemented yet. (Method getHoldability)");
 	}
 
 
 	@Override
 	public Clob createClob() throws SQLException {
+		log.log(Level.SEVERE, "Unsupported Operation.");
 		throw new UnsupportedOperationException("Not implemented yet. (Method createClob)");
 	}
 
 	@Override
 	public Blob createBlob() throws SQLException {
+		log.log(Level.SEVERE, "Unsupported Operation.");
 		throw new UnsupportedOperationException("Not implemented yet. (Method createBlob)");
 	}
 
 	@Override
 	public NClob createNClob() throws SQLException {
+		log.log(Level.SEVERE, "Unsupported Operation.");
 		throw new UnsupportedOperationException("Not implemented yet. (Method createNClob)");
 	}
 
 	@Override
 	public SQLXML createSQLXML() throws SQLException {
+		log.log(Level.SEVERE, "Unsupported Operation.");
 		throw new UnsupportedOperationException("Not implemented yet. (Method createSQLXML)");
 	}
 
 	@Override
 	public void setClientInfo(String name, String value)
 			throws SQLClientInfoException {
+		log.log(Level.SEVERE, "Unsupported Operation.");
 		throw new UnsupportedOperationException("Not implemented yet. (Method setClientInfo)");
 	}
 
 	@Override
 	public void setClientInfo(Properties properties)
 			throws SQLClientInfoException {
+		log.log(Level.SEVERE, "Unsupported Operation.");
 		throw new UnsupportedOperationException("Not implemented yet. (Method setClientInfo)");
 	}
 
 	@Override
 	public Array createArrayOf(String typeName, Object[] elements)
 			throws SQLException {
+		log.log(Level.SEVERE, "Unsupported Operation.");
 		throw new UnsupportedOperationException("Not implemented yet. (Method createArrayOf)");
 	}
 
 	@Override
 	public Struct createStruct(String typeName, Object[] attributes)
 			throws SQLException {
+		log.log(Level.SEVERE, "Unsupported Operation.");
 		throw new UnsupportedOperationException("Not implemented yet. (Method createStruct)");
 	}
 	
