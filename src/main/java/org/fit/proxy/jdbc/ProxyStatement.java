@@ -28,9 +28,11 @@ public class ProxyStatement implements Statement {
 	
 	private Queue<SQLWarning> warnings = new LinkedList<>();
 	
-	private int resultSetType = 0;
-	private int resultSetConcurrency = 0;
-	private int resultSetHoldability = 0;
+	private int resultSetType;
+	private int resultSetConcurrency;
+	private int resultSetHoldability;
+	
+	private final int resultSetCase;
 	
 	private int maxFieldVal;
 	private boolean maxFieldSet = false;
@@ -60,21 +62,23 @@ public class ProxyStatement implements Statement {
 	
 	public ProxyStatement(ProxyConnection pc) {
 		connection = pc;
+		resultSetCase = 1;
 		
 		initiateStatement();
 	}
 	
 	public ProxyStatement(ProxyConnection pc, int resultSetType, int resultSetConcurrency) {
 		connection = pc;
+		resultSetCase = 2;
 		
 		this.resultSetType = resultSetType;
 		this.resultSetConcurrency = resultSetConcurrency;
-		
 		initiateStatement();
 	}
 	
 	public ProxyStatement(ProxyConnection pc, int resultSetType, int resultSetConcurrency, int resultSetHoldability) {
 		connection = pc;
+		resultSetCase = 3;
 		
 		this.resultSetType = resultSetType;
 		this.resultSetConcurrency = resultSetConcurrency;
@@ -102,6 +106,29 @@ public class ProxyStatement implements Statement {
 		}
 		
 		log.log(Level.INFO, "Proxy statement has been initiated. Values: resultSetType = " + resultSetType + ", resultSetConcurrency = " + resultSetConcurrency);
+	}
+	
+	/**
+	 * This gets the right statement according to which constructor was called
+	 * @param sql query
+	 * @return right type of statement
+	 * @throws SQLException
+	 */
+	private Statement getStatement(String sql) throws SQLException {
+		Statement res;
+		
+		log.log(Level.FINE, "Getting the right statement.");
+		
+		Connection act = connection.getSwitcher().getConnection(sql);
+		
+		
+		switch (resultSetCase) {
+		case 2: res = act.createStatement(resultSetType, resultSetConcurrency); break;
+		case 3: res = act.createStatement(resultSetType, resultSetConcurrency, resultSetHoldability); break;
+		default: res = act.createStatement();
+		}
+		
+		return res;
 	}
 	
 	/**
@@ -135,7 +162,7 @@ public class ProxyStatement implements Statement {
 		}
 		
 		log.log(Level.FINE, "Establishing new statement.");
-		statement = connection.prepareCall(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
+		statement = getStatement(sql);
 		
 		log.log(Level.FINE, "Setting values from old statement to new statement");
 		
