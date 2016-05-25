@@ -4,7 +4,7 @@
 <title>Proxy driver - usage</title>
 <meta name="generator" content="Bluefish 2.2.7" >
 <meta name="author" content="Ondra" >
-<meta name="date" content="2016-05-17T15:59:25+0200" >
+<meta name="date" content="2016-05-25T03:08:32+0200" >
 <meta name="copyright" content="">
 <meta name="keywords" content="">
 <meta name="description" content="">
@@ -146,7 +146,7 @@ proxyConnection.close();
 </code>
 
 <h2>Advices:</h2>
-<p>The only thing that is set on start is auto commit = true. Setting of one thing will affect all connection. Furthermore, asking for value of connection attribute will probably fail if called before setting.</p>
+<p>The only thing that is set on start is auto commit = true and read only = false. Setting of one thing will affect all connection. Furthermore, asking for value of connection attribute will probably fail if called before setting.</p>
 
 <h3>Examples:</h3>
 <h4>Wrong:</h4>
@@ -165,8 +165,14 @@ proxyConnection.setReadOnly(true);<br>
 boolean readOnly = proxyConnection.isReadOnly(); //correct
 </code>
 
+<p>Other advices concerns transactions. Do not use them unless you are absolutely sure what you are doing! Make sure that all what you are doing in transactions is supported by all JDBC drivers.</p>
+
 <h2>Unsupported features:</h2>
-<p>Not written yet</p>
+<p>These methods are all unsupported. Using them will throw an UnsupportedOperationException.</p>
+
+<ul>
+<li></li>
+</ul>
 
 </body>
 </html>
