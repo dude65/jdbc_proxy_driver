@@ -17,6 +17,6 @@ Use command in your command line "mvn package" in project root directory. To gen
 To see how to configure properties and to see usage examples, visit usage.html
 
 ## License:
-This project was created as a school (FIT ČVUT) work in cooperetion with Profinit s.r.o company. Everybody is free to use the driver without any fee. Everybody can change the code of the driver as he wish. Please, provide the name of original author.
+This project was created as a school (FIT ČVUT) work in cooperetion with Profinit s.r.o company. The project is licensed under Apache License 2.0. It is possible to see the whole text of the license in included file - license.txt or you can visit http://www.apache.org/licenses/LICENSE-2.0 .
 
 **Author: Ondřej Marek, 2016**
