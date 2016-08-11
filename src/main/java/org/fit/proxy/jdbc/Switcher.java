@@ -237,6 +237,7 @@ public class Switcher {
 	 * 
 	 * @return - the list of failed connections (new object), if no connection ever failed, then returns empty list
 	 */
+	@Deprecated
 	public List<Connection> getFailedConnections() {
 		log.log(Level.INFO, "Getting list of failed connections.");
 		

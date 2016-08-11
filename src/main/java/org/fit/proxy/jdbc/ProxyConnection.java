@@ -99,42 +99,10 @@ public class ProxyConnection implements Connection {
 	 * 
 	 * @return - the list of failed connections (new object), if no connection ever failed, then returns empty list
 	 */
+	@Deprecated
 	public List<Connection> getFailedConnections() {
 		return switcher.getFailedConnections();
 	}
-	
-	/**
-	 * This method is called if some method fails during transaction and all changes has to be unmade
-	 * 
-	 * @param map of savepoints
-	 * @return error message of unchanged connections
-	 */
-	/*private String returnChanges(Map<ConnectionUnit, Savepoint> save) {
-		String res = new String();
-		
-		log.log(Level.FINE, "Unmaking changes");
-		
-		for (Entry<ConnectionUnit, Savepoint> entry : save.entrySet()) {
-			ConnectionUnit rollUnit = entry.getKey();
-			Connection c = rollUnit.getConnection();
-			Savepoint s = entry.getValue();
-			
-			try {
-				log.log(Level.FINE, "Unmaking changes in connection " + rollUnit.getName());
-				c.rollback(s);
-				c.releaseSavepoint(s);
-			} catch (SQLException e2) {
-				String exc = "Unable to return changes to former value in connection " + rollUnit.getName() + ". Original message: " + e2.getMessage();
-				
-				log.log(Level.SEVERE, exc);
-				res += '\n' + exc;
-			}
-		}
-		
-		log.log(Level.FINE, "Unmaking changes done.");
-		
-		return res;
-	}*/
 	
 	/**
 	 * Releases all savepoints that were used during transactions
@@ -620,8 +588,6 @@ public class ProxyConnection implements Connection {
 				Connection c = u.getConnection();
 				Savepoint s = entry.getValue();
 				
-				//saved.put(u, c.setSavepoint());
-				
 				log.log(Level.FINE, "Doing rollback in connection " + u.getName());
 				c.rollback(s);
 			}
@@ -991,7 +957,7 @@ public class ProxyConnection implements Connection {
 		if (res == null) {
 			String exc = "Property " + name + "is not contained.";
 			
-			log.log(Level.SEVERE, exc);
+			log.log(Level.WARNING, exc);
 			throw new SQLException(exc);
 		}
 		
