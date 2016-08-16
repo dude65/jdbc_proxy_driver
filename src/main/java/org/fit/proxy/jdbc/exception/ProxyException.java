@@ -12,6 +12,7 @@ import java.util.List;
 public class ProxyException extends Exception {
 	private static final long serialVersionUID = 6458125935055620145L;
 	private final String message;
+	private Throwable cause;
 	
 	public ProxyException(String message) {
 		this.message = message;
@@ -63,6 +64,15 @@ public class ProxyException extends Exception {
 	@Override
 	public String getMessage() {
 		return message;
+	}
+	
+	@Override
+	public synchronized Throwable getCause() {
+		return cause;
+	}
+	
+	public void setCause(Throwable cause) {
+		this.cause = cause;
 	}
 
 }

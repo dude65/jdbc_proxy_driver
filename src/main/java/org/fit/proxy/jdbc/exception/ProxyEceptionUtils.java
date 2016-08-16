@@ -69,16 +69,21 @@ public class ProxyEceptionUtils {
 	 */
 	public static void logExceptions(ProxyException proxyException, Level level) {
 		List<ExceptionUnit> exceptionList = proxyException.getExceptions();
+		Throwable cause = proxyException.getCause();
 		
-		for (ExceptionUnit exception : exceptionList) {
-			StringBuilder messageBuilder = new StringBuilder(ProxyConfiguration.getParsedDate(exception.getDate())).append(": ").append(exception.getMessage());
+		if (cause != null) {
+			log.log(level, "Throwable cause:", cause);
+		}
+		
+		for (ExceptionUnit exceptionUnit : exceptionList) {
+			StringBuilder messageBuilder = new StringBuilder(ProxyConfiguration.getParsedDate(exceptionUnit.getDate())).append(": ").append(exceptionUnit.getMessage());
 			String message = messageBuilder.toString();
-			Exception cause = exception.getException();
+			Exception exception = exceptionUnit.getException();
 			
-			if (cause == null) {
+			if (exception == null) {
 				log.log(level, message);
 			} else {
-				log.log(level, message, cause);
+				log.log(level, message, exception);
 			}
 		}
 	}

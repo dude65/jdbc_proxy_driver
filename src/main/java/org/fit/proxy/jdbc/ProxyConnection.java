@@ -25,6 +25,11 @@ import java.util.concurrent.Executor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.fit.proxy.jdbc.actions.ReadOnlyAction;
+import org.fit.proxy.jdbc.actions.back.ReadOnlyTakeBackAction;
+import org.fit.proxy.jdbc.exception.ProxyEceptionUtils;
+import org.fit.proxy.jdbc.exception.ProxyException;
+
 /**
  * 
  * @author Ondřej Marek
@@ -434,54 +439,23 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public void setReadOnly(boolean readOnly) throws SQLException {
-		List<ConnectionUnit> l = switcher.getConnectionList();
 		Map<ConnectionUnit, Boolean> save = new HashMap<>();
-		ConnectionUnit u = null;
-		
-		log.log(Level.INFO, "Setting connection to read only = " + readOnly);
 		
 		try {
-			for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
-				u = it.next();
-				Connection c = u.getConnection();
-				
-				log.log(Level.FINE, "Saving read only indication in connection " + u.getName());
-				save.put(u, c.isReadOnly());
-				
-				log.log(Level.FINE, "Setting read only indication in connection " + u.getName());
-				c.setReadOnly(readOnly);
-			}
+			new ReadOnlyAction(switcher, readOnly, save).run();
+			this.readOnly = readOnly;
+			this.readOnlySet = true;
 			
+			log.fine(new StringBuilder("Proxy connection set read only = ").append(readOnly).toString());
 		} catch (SQLException e) {
-			String exc = new String();
-			
-			log.log(Level.SEVERE, "Setting read only indication = " + readOnly +" failed in connection " + u.getName());
-			
-			for (Entry<ConnectionUnit, Boolean> entry : save.entrySet()) {
-				ConnectionUnit cu = entry.getKey();
-				Boolean ro = entry.getValue();
-				
-				try {
-					cu.getConnection().setReadOnly(ro);
-				} catch (SQLException sqle) {
-					readOnlySet = false;
-					
-					String message = "Unable to set back read only in connection " + cu.getName() + " to value: " + ro;
-					
-					log.log(Level.SEVERE, message);
-					exc += "\n" + message;
-				}
+			try {
+				new ReadOnlyTakeBackAction(save).run();
+				log.log(Level.WARNING, new StringBuilder("Cannot set proxy connection to read only = ").append(readOnly).toString(), e);
+			} catch (ProxyException pe) {
+				pe.setCause(e);
+				ProxyEceptionUtils.throwAndLogAsSql(pe, Level.SEVERE);
 			}
-			
-			String message = "Unable to set read only connection " + u.getName() + ". Original message: " + e.getMessage() + exc;
-			
-			log.log(Level.SEVERE, "Whole message: " + message);
-			throw new SQLException(message);
-		}
-		
-		readOnlySet = true;
-		this.readOnly = readOnly;
-		
+		}		
 	}
 
 	@Override
