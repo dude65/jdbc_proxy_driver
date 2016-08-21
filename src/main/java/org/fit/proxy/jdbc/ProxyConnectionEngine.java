@@ -65,6 +65,23 @@ public class ProxyConnectionEngine {
 	}
 	
 	/**
+	 * Returns a value by given name
+	 * @param name property name
+	 * @return property value
+	 * @throws SQLException if property has not been set, yet.
+	 */
+	public Object getPropertyValue(String name) throws SQLException {
+		if (!isPropertySet(name)) {
+			String message = new StringBuilder("Attempting to get property named ").append(name).append(" which has not been set, yet!").toString();
+			log.warning(message);
+			
+			throw new SQLException(message);
+		}
+		
+		return connectionProperties.get(name).getValue();
+	}
+	
+	/**
 	 * Runs action for Proxy Connection
 	 * @param action
 	 * @throws SQLException if something goes wrong

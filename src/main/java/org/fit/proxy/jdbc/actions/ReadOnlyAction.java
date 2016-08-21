@@ -2,6 +2,7 @@ package org.fit.proxy.jdbc.actions;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -16,12 +17,11 @@ public class ReadOnlyAction implements IAction {
 	
 	private final Switcher switcher;
 	private final boolean readOnly;
-	private final Map<ConnectionUnit, Boolean> save;
+	private final Map<ConnectionUnit, Boolean> save = new HashMap<>();
 
-	public ReadOnlyAction(Switcher switcher, boolean readOnly, Map<ConnectionUnit, Boolean> save) {
+	public ReadOnlyAction(Switcher switcher, boolean readOnly) {
 		this.switcher = switcher;
 		this.readOnly = readOnly;
-		this.save = save;
 	}
 
 	@Override

@@ -25,6 +25,8 @@ import java.util.concurrent.Executor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.fit.proxy.jdbc.actions.ReadOnlyAction;
+
 /**
  * 
  * @author Ondřej Marek
@@ -36,15 +38,13 @@ public class ProxyConnection implements Connection {
 	private final static Logger log = Logger.getLogger(ProxyDriver.class.getName());
 	
 	private Switcher switcher;
+	private final ProxyConnectionEngine engine = new ProxyConnectionEngine();
 	
 	private int timeout = 0;
 	private boolean timeoutSet = false;
 	
 	private boolean autoCommit;
 	private boolean autoCommitSet = false;
-	
-	private boolean readOnly;
-	private boolean readOnlySet;
 	
 	private ProxySavepoint currTransaction;
 	
@@ -434,38 +434,12 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public void setReadOnly(boolean readOnly) throws SQLException {
-		throw new UnsupportedOperationException("Temporarily unsupported");
-		
-		/*Map<ConnectionUnit, Boolean> save = new HashMap<>();
-		 try {
-			new ReadOnlyAction(switcher, readOnly, save).run();
-			this.readOnly = readOnly;
-			this.readOnlySet = true;
-			
-			log.fine(new StringBuilder("Proxy connection set read only = ").append(readOnly).toString());
-		} catch (SQLException e) {
-			try {
-				new ReadOnlyTakeBackAction(save).run();
-				log.log(Level.WARNING, new StringBuilder("Cannot set proxy connection to read only = ").append(readOnly).toString(), e);
-			} catch (ProxyException pe) {
-				pe.setCause(e);
-				ProxyEceptionUtils.throwAndLogAsSql(pe, Level.SEVERE);
-			}
-		}*/	
+		engine.runAction(new ReadOnlyAction(switcher, readOnly));
 	}
 
 	@Override
 	public boolean isReadOnly() throws SQLException {
-		log.log(Level.FINE, "Checking whether connection is read only.");
-		
-		if (!readOnlySet) {
-			String exc = "The value read only has not been set yet!";
-			
-			log.log(Level.SEVERE, exc);
-			throw new SQLException(exc);
-		}
-		
-		return readOnly;
+		return (Boolean) engine.getPropertyValue("readOnly");
 	}
 	
 	@Override
