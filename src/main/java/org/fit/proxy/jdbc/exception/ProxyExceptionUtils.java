@@ -14,7 +14,7 @@ import org.fit.proxy.jdbc.configuration.ProxyConfiguration;
  * @author Ondřej Marek
  *
  */
-public class ProxyEceptionUtils {
+public class ProxyExceptionUtils {
 	private final static Logger log = Logger.getLogger(ProxyDriver.class.getName());
 	
 	/**

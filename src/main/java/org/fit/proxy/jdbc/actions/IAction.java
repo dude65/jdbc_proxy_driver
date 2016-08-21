@@ -19,7 +19,31 @@ public interface IAction {
 	
 	/**
 	 * Runs action that repairs faults caused by runAction()
-	 * @throws ProxyException
+	 * @throws ProxyException if something goes wrong
 	 */
 	public void runReverseAction() throws ProxyException;
+	
+	/**
+	 * Gets successful state message
+	 * @return message
+	 */
+	public String getOkMessage();
+	
+	/**
+	 * Gets failure state message
+	 * @return message
+	 */
+	public String getErrMessage();
+	
+	/**
+	 * Returns the name of the property that is changed
+	 * @return name
+	 */
+	public String getPropertyName();
+	
+	/**
+	 * Returns the value of the property that is changed
+	 * @return value 
+	 */
+	public Object getPropertyValue();
 }

@@ -8,10 +8,12 @@ import java.util.Map.Entry;
 
 import org.fit.proxy.jdbc.ConnectionUnit;
 import org.fit.proxy.jdbc.Switcher;
-import org.fit.proxy.jdbc.exception.ProxyEceptionUtils;
+import org.fit.proxy.jdbc.exception.ProxyExceptionUtils;
 import org.fit.proxy.jdbc.exception.ProxyException;
 
 public class ReadOnlyAction implements IAction {
+	private static final String PROPERTY_NAME = "readOnly";
+	
 	private final Switcher switcher;
 	private final boolean readOnly;
 	private final Map<ConnectionUnit, Boolean> save;
@@ -50,7 +52,27 @@ public class ReadOnlyAction implements IAction {
 			}
 		}
 		
-		ProxyEceptionUtils.throwIfPossible(exception);
+		ProxyExceptionUtils.throwIfPossible(exception);
+	}
+
+	@Override
+	public String getOkMessage() {
+		return new StringBuilder("Proxy connection set read only = ").append(readOnly).toString();
+	}
+
+	@Override
+	public String getErrMessage() {
+		return new StringBuilder("Cannot set proxy connection to read only = ").append(readOnly).toString();
+	}
+
+	@Override
+	public String getPropertyName() {
+		return PROPERTY_NAME;
+	}
+
+	@Override
+	public Object getPropertyValue() {
+		return readOnly;
 	}
 
 }
