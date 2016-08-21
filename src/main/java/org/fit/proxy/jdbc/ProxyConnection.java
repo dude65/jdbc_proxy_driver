@@ -25,11 +25,6 @@ import java.util.concurrent.Executor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.fit.proxy.jdbc.actions.ReadOnlyAction;
-import org.fit.proxy.jdbc.actions.back.ReadOnlyTakeBackAction;
-import org.fit.proxy.jdbc.exception.ProxyEceptionUtils;
-import org.fit.proxy.jdbc.exception.ProxyException;
-
 /**
  * 
  * @author Ondřej Marek
@@ -439,9 +434,10 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public void setReadOnly(boolean readOnly) throws SQLException {
-		Map<ConnectionUnit, Boolean> save = new HashMap<>();
+		throw new UnsupportedOperationException("Temporarily unsupported");
 		
-		try {
+		/*Map<ConnectionUnit, Boolean> save = new HashMap<>();
+		 try {
 			new ReadOnlyAction(switcher, readOnly, save).run();
 			this.readOnly = readOnly;
 			this.readOnlySet = true;
@@ -455,7 +451,7 @@ public class ProxyConnection implements Connection {
 				pe.setCause(e);
 				ProxyEceptionUtils.throwAndLogAsSql(pe, Level.SEVERE);
 			}
-		}		
+		}*/	
 	}
 
 	@Override
