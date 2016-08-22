@@ -96,6 +96,8 @@ public class ProxyConnectionEngine {
 			try {
 				action.runReverseAction();
 				log.log(Level.WARNING, action.getErrMessage(), e);
+				
+				throw e;
 			} catch (ProxyException pe) {
 				pe.setCause(e);
 				

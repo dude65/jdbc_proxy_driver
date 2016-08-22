@@ -50,7 +50,7 @@ public class ProxyException extends Exception {
 	 * @return is throwable
 	 */
 	public boolean isThrowable() {
-		return !exceptionList.isEmpty();
+		return !exceptionList.isEmpty() || cause != null;
 	}
 	
 	/**

@@ -11,7 +11,7 @@ import org.apache.commons.lang3.time.DateFormatUtils;
  *
  */
 public class ProxyConfiguration {
-	private static String dateFormat = "%H:%M:%S %d.%m.%Y";
+	private static String dateFormat = "dd.MM.yyyy HH:mm:ss";
 
 	public static String getDateFormat() {
 		return dateFormat;
