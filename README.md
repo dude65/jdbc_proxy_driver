@@ -1,6 +1,9 @@
 # jdbc_proxy_driver
 This is a JDBC proxy driver that provides connections to multiple databases according to reqular expressions without a need of a content switching. This is useful for databases with replicated data when it is needed to validate data among databases according to replication definitions (which are regular expressions). It can be use for switching sql queries to 2 and more databases.
 
+## Note
+If you want to use a stable version of the driver, please download source code from branch called **stable**.
+
 ## Prerequisites:
 * **Java 1.7**
 * **Maven** - build application

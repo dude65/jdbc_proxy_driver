@@ -4,7 +4,7 @@
   <groupId>org.fit.jdbcProxyDriver</groupId>
   <artifactId>jdbc-proxy-driver</artifactId>
   <packaging>jar</packaging>
-  <version>1.0</version>
+  <version>2.0.dev</version>
   <name>jdbc-proxy-driver</name>
   <url>http://maven.apache.org</url>
 
