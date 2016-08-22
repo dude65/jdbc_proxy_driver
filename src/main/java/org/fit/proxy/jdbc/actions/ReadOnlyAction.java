@@ -9,12 +9,11 @@ import java.util.Map.Entry;
 
 import org.fit.proxy.jdbc.ConnectionUnit;
 import org.fit.proxy.jdbc.Switcher;
+import org.fit.proxy.jdbc.configuration.ProxyConstants;
 import org.fit.proxy.jdbc.exception.ProxyExceptionUtils;
 import org.fit.proxy.jdbc.exception.ProxyException;
 
 public class ReadOnlyAction implements IAction {
-	private static final String PROPERTY_NAME = "readOnly";
-	
 	private final Switcher switcher;
 	private final boolean readOnly;
 	private final Map<ConnectionUnit, Boolean> save = new HashMap<>();
@@ -67,7 +66,7 @@ public class ReadOnlyAction implements IAction {
 
 	@Override
 	public String getPropertyName() {
-		return PROPERTY_NAME;
+		return ProxyConstants.READ_ONLY_ACTION;
 	}
 
 	@Override

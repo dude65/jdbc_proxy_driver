@@ -26,6 +26,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.fit.proxy.jdbc.actions.ReadOnlyAction;
+import org.fit.proxy.jdbc.configuration.ProxyConstants;
 
 /**
  * 
@@ -439,7 +440,7 @@ public class ProxyConnection implements Connection {
 
 	@Override
 	public boolean isReadOnly() throws SQLException {
-		return (Boolean) engine.getPropertyValue("readOnly");
+		return (Boolean) engine.getPropertyValue(ProxyConstants.READ_ONLY_ACTION);
 	}
 	
 	@Override
