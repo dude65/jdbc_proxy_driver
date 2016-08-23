@@ -77,7 +77,7 @@ public class TestDriverConnection {
 	
 	@Before
 	public void setUp() throws Exception {
-		Properties p = new LoadProperties().load();
+		Properties p = new TestUtils().load();
 		
 		proxy = new ProxyDriver().connect(null, p);
 		

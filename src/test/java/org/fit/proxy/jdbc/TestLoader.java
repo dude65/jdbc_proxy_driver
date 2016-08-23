@@ -21,7 +21,7 @@ import org.junit.Test;
 public class TestLoader {
 	@Test
 	public void test1() throws URISyntaxException, IOException, SQLException, ClassNotFoundException {
-		Properties p = new LoadProperties().load();
+		Properties p = new TestUtils().load();
 		Switcher s1 = Loader.loadData(p);
 		
 		String path = this.getClass().getClassLoader().getResource("config.properties").toString();
@@ -58,7 +58,7 @@ public class TestLoader {
 	
 	@Test(expected=SQLException.class)
 	public void test2() throws URISyntaxException, IOException, SQLException {
-		Properties p = new LoadProperties().load("test2.properties");
+		Properties p = new TestUtils().load("test2.properties");
 		Loader.loadData(p);
 		
 		fail("Expected SQLException - switcher contains two connection units with the same name.");
@@ -66,7 +66,7 @@ public class TestLoader {
 	
 	@Test(expected=SQLException.class)
 	public void test3() throws URISyntaxException, IOException, SQLException {
-		Properties p = new LoadProperties().load("test3.properties");
+		Properties p = new TestUtils().load("test3.properties");
 		Loader.loadData(p);
 		
 		fail("Expected SQLException - db connection (database2) does not contain the key db1_regexp.");
@@ -74,7 +74,7 @@ public class TestLoader {
 	
 	@Test(expected=SQLException.class)
 	public void test4() throws URISyntaxException, IOException, SQLException {
-		Properties p = new LoadProperties().load("test4.properties");
+		Properties p = new TestUtils().load("test4.properties");
 		Loader.loadData(p);
 		
 		fail("Expected SQLException - the number of databases does not match.");

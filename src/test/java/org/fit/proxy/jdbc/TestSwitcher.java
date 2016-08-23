@@ -18,7 +18,7 @@ public class TestSwitcher {
 	
 	@Before
 	public void load() throws SQLException, IOException, URISyntaxException {		
-		Properties p = new LoadProperties().load();
+		Properties p = new TestUtils().load();
 		
 		s = Loader.loadData(p);
 	}
