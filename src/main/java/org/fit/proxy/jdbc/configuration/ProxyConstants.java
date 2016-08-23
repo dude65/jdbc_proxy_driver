@@ -6,4 +6,5 @@ package org.fit.proxy.jdbc.configuration;
  */
 public class ProxyConstants {
 	public static String READ_ONLY_ACTION = "readOnly";
+	public static String SCHEMA_ACTION = "schema";
 }

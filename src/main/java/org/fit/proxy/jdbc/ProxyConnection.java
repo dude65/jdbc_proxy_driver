@@ -26,6 +26,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.fit.proxy.jdbc.actions.ReadOnlyAction;
+import org.fit.proxy.jdbc.actions.SchemaAction;
 import org.fit.proxy.jdbc.configuration.ProxyConstants;
 
 /**
@@ -48,9 +49,6 @@ public class ProxyConnection implements Connection {
 	private boolean autoCommitSet = false;
 	
 	private ProxySavepoint currTransaction;
-	
-	private String schema;
-	private boolean schemaSet = false;
 	
 	private String catalog;
 	private boolean catalogSet = false;
@@ -676,65 +674,12 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public void setSchema(String schema) throws SQLException {
-		List<ConnectionUnit> l = switcher.getConnectionList();
-		Map<ConnectionUnit, String> save = new HashMap<>();
-		ConnectionUnit u = null;
-		
-		log.log(Level.INFO, "Setting schema to value = " + schema);
-		
-		try {
-			for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
-				u = it.next();
-				Connection c = u.getConnection();
-				
-				log.log(Level.FINE, "Saving schema in connection " + u.getName());
-				save.put(u, c.getSchema());
-				
-				log.log(Level.FINE, "Setting schema in connection " + u.getName());
-				c.setSchema(schema);
-			}
-			
-		} catch (SQLException e) {
-			String exc = new String();
-			log.log(Level.SEVERE, "Setting schema failed in connection " + u.getName());
-			
-			for (Entry<ConnectionUnit, String> entry : save.entrySet()) {
-				ConnectionUnit cu = entry.getKey();
-				String sch = entry.getValue();
-				
-				try {
-					cu.getConnection().setSchema(sch);
-				} catch (SQLException sqle) {
-					schemaSet = false;
-					
-					String message = "Unable to set back schema in connection " + cu.getName() + " to value: " + sch;
-					exc += "\n" + message;
-				}
-			}
-			
-			String message = "Unable to change schema in connection " + u.getName() + ". Original message: " + e.getMessage() + exc;
-			
-			log.log(Level.SEVERE, "Whole message: " + message);
-			throw new SQLException(message);
-		}
-		
-		
-		schemaSet = true;
-		this.schema = schema;
+		engine.runAction(new SchemaAction(switcher, schema));
 	}
 
 	@Override
 	public String getSchema() throws SQLException {
-		log.log(Level.FINE, "Getting schema");
-		
-		if (!schemaSet) {
-			String exc = "Database schema has not been set yet!";
-			
-			log.log(Level.SEVERE, exc);
-			throw new SQLException(exc);
-		}
-		
-		return schema;
+		return (String) engine.getPropertyValue(ProxyConstants.SCHEMA_ACTION);
 	}
 	
 	@Override
@@ -841,7 +786,7 @@ public class ProxyConnection implements Connection {
 				try {
 					cu.getConnection().setTypeMap(typeMap);
 				} catch (SQLException sqle) {
-					schemaSet = false;
+					//schemaSet = false; bug???
 					
 					String message = "Unable to set back type map in connection " + cu.getName();
 					
