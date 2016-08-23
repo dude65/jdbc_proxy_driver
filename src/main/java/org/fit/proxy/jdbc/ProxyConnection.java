@@ -25,6 +25,7 @@ import java.util.concurrent.Executor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.fit.proxy.jdbc.actions.CatalogAction;
 import org.fit.proxy.jdbc.actions.ReadOnlyAction;
 import org.fit.proxy.jdbc.actions.SchemaAction;
 import org.fit.proxy.jdbc.configuration.ProxyConstants;
@@ -49,9 +50,6 @@ public class ProxyConnection implements Connection {
 	private boolean autoCommitSet = false;
 	
 	private ProxySavepoint currTransaction;
-	
-	private String catalog;
-	private boolean catalogSet = false;
 	
 	private Map<String, Class<?>> typeMap = null;
 	
@@ -608,68 +606,12 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public void setCatalog(String catalog) throws SQLException {
-		List<ConnectionUnit> l = switcher.getConnectionList();
-		Map<ConnectionUnit, String> save = new HashMap<>();
-		ConnectionUnit u = null;
-		
-		log.log(Level.INFO, "Setting catalog to value = " + catalog);
-		
-		try {
-			for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
-				u = it.next();
-				Connection c = u.getConnection();
-				
-				log.log(Level.FINE, "Saving catalog in connection " + u.getName());
-				save.put(u, c.getCatalog());
-				
-				log.log(Level.FINE, "Setting catalog in connection " + u.getName());
-				c.setCatalog(catalog);
-			}
-			
-		} catch (SQLException e) {
-			String exc = new String();
-			
-			log.log(Level.SEVERE, "Setting catalog in connection " + u.getName() + " failed. Setting catalog back.");
-			
-			for (Entry<ConnectionUnit, String> entry : save.entrySet()) {
-				ConnectionUnit cu = entry.getKey();
-				String cat = entry.getValue();
-				
-				try {
-					cu.getConnection().setCatalog(cat);
-				} catch (SQLException sqle) {
-					catalogSet = false;
-					
-					String message = "Unable to set back catalog in connection " + cu.getName() + " to value: " + cat;
-					
-					log.log(Level.SEVERE, message);
-					exc += "\n" + message;
-				}
-			}
-			
-			String message = "Unable to change catalog in connection " + u.getName() + ". Original message: " + e.getMessage() + exc;
-			
-			log.log(Level.SEVERE, "Whole message: " + message);
-			throw new SQLException(message);
-		}
-		
-		
-		catalogSet = true;
-		this.catalog = catalog;
+		engine.runAction(new CatalogAction(switcher, catalog));
 	}
 
 	@Override
 	public String getCatalog() throws SQLException {
-		log.log(Level.FINE, "Getting catalog..");
-		
-		if (!catalogSet) {
-			String exc = "Database catalog has not been set yet!";
-			
-			log.log(Level.SEVERE, exc);
-			throw new SQLException(exc);
-		}
-		
-		return catalog;
+		return (String) engine.getPropertyValue(ProxyConstants.CATALOG_ACTION);
 	}
 	
 	@Override

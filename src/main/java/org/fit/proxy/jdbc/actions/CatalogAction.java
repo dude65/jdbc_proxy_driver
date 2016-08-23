@@ -13,16 +13,16 @@ import org.fit.proxy.jdbc.configuration.ProxyConstants;
 import org.fit.proxy.jdbc.exception.ProxyException;
 import org.fit.proxy.jdbc.exception.ProxyExceptionUtils;
 
-public class SchemaAction implements IAction {
+public class CatalogAction implements IAction {
 	private final Switcher switcher;
-	private final String schema;
+	private final String catalog;
 	private final Map<ConnectionUnit, String> save = new HashMap<>();
-
-	public SchemaAction(Switcher switcher, String schema) {
+	
+	public CatalogAction(Switcher switcher, String catalog) {
 		this.switcher = switcher;
-		this.schema = schema;
+		this.catalog = catalog;
 	}
-
+	
 	@Override
 	public void runAction() throws SQLException {
 		List<ConnectionUnit> connections = switcher.getConnectionList();
@@ -30,50 +30,48 @@ public class SchemaAction implements IAction {
 		for (ConnectionUnit u : connections) {
 			Connection connection = u.getConnection();
 			
-			save.put(u, connection.getSchema());
-			connection.setSchema(schema);
+			save.put(u, connection.getCatalog());
+			connection.setCatalog(catalog);
 		}
-		
 	}
 
 	@Override
 	public void runReverseAction() throws ProxyException {
-		ProxyException exception = new ProxyException("Unable to set back schema.");
+		ProxyException exception = new ProxyException("Unable to set back catalog.");
 		
 		for (Entry<ConnectionUnit, String> entry : save.entrySet()) {
 			ConnectionUnit connection = entry.getKey();
-			String saveSchema = entry.getValue();
+			String saveCatalog = entry.getValue();
 			
 			try {
-				connection.getConnection().setSchema(saveSchema);
+				connection.getConnection().setCatalog(saveCatalog);
 			} catch (SQLException sqle) {
-				StringBuilder message = new StringBuilder("Unable to set back schema in connection ").append(connection.getName()).append(" to value: ").append(schema);
+				StringBuilder message = new StringBuilder("Unable to set back catalog in connection ").append(connection.getName()).append(" to value: ").append(catalog);
 				exception.addException(message.toString(), sqle);
 			}
 		}
 		
 		ProxyExceptionUtils.throwIfPossible(exception);
-		
 	}
 
 	@Override
 	public String getOkMessage() {
-		return new StringBuilder("Proxy connection schema ").append(schema).append(" was set successfully").toString();
+		return new StringBuilder("Proxy connection catalog ").append(catalog).append(" was set successfully.").toString();
 	}
 
 	@Override
 	public String getErrMessage() {
-		return new StringBuilder("Unable to set proxy connection schema to value ").append(schema).toString();
+		return new StringBuilder("Unable to set catalog to value ").append(catalog).toString();
 	}
 
 	@Override
 	public String getPropertyName() {
-		return ProxyConstants.SCHEMA_ACTION;
+		return ProxyConstants.CATALOG_ACTION;
 	}
 
 	@Override
 	public Object getPropertyValue() {
-		return schema;
+		return catalog;
 	}
 
 }
