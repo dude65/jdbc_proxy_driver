@@ -26,6 +26,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.fit.proxy.jdbc.actions.CatalogAction;
+import org.fit.proxy.jdbc.actions.NetworkTimeoutAction;
 import org.fit.proxy.jdbc.actions.ReadOnlyAction;
 import org.fit.proxy.jdbc.actions.SchemaAction;
 import org.fit.proxy.jdbc.configuration.ProxyConstants;
@@ -42,9 +43,6 @@ public class ProxyConnection implements Connection {
 	
 	private Switcher switcher;
 	private final ProxyConnectionEngine engine = new ProxyConnectionEngine();
-	
-	private int timeout = 0;
-	private boolean timeoutSet = false;
 	
 	private boolean autoCommit;
 	private boolean autoCommitSet = false;
@@ -244,85 +242,19 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
-		List<ConnectionUnit> l = switcher.getConnectionList();
-		Map<ConnectionUnit, Integer> save = new HashMap<>();
-		ConnectionUnit u = null;
-		
-		log.log(Level.INFO, "Setting network timeout, miliseconds = " + milliseconds);
-		try {
-			for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
-				u = it.next();
-				Connection c = u.getConnection();
-				
-				log.log(Level.FINE, "Saving network timeout in connection " + u.getName());
-				save.put(u, c.getNetworkTimeout());
-				
-				log.log(Level.FINE, "Setting network timeout in connection " + u.getName());
-				c.setNetworkTimeout(executor, milliseconds);
-			}
-			
-		} catch (SQLException e) {
-			String exc = new String();
-			
-			log.log(Level.SEVERE, "An error occured when setting network timeout in connection " + u.getName() + ". Setting values back in other connections.");
-			
-			for (Entry<ConnectionUnit, Integer> entry : save.entrySet()) {
-				ConnectionUnit cu = entry.getKey();
-				Integer time = entry.getValue();
-				
-				try {
-					cu.getConnection().setNetworkTimeout(executor, time);
-				} catch (SQLException sqle) {
-					timeoutSet = false;
-					
-					String message = "Unable to set back network timeout in connection " + cu.getName() + " to value: " + time;
-					
-					log.log(Level.SEVERE, message);
-					exc += "\n" + message;
-				}
-			}
-			
-			String message = "Unable to change network timeout in connection " + u.getName() + ". Original message: " + e.getMessage() + exc;
-			
-			log.log(Level.SEVERE, "Whole message: " + message);
-			throw new SQLException(message);
-		}
-		
-		log.log(Level.INFO, "Network timeout was set successfully, miliseconds = " + milliseconds);
-		
-		timeoutSet = true;
-		timeout = milliseconds;
-		
-		
+		engine.runAction(new NetworkTimeoutAction(switcher, executor, milliseconds));
 	}
 
 	@Override
 	public int getNetworkTimeout() throws SQLException {
-		log.log(Level.FINE, "Getting network timeout.");
-		
-		if (!timeoutSet) {
-			String exc = "Timeout has not been set yet!";
-			
-			log.log(Level.SEVERE, exc);
-			
-			throw new SQLException(exc);
-		}
-		
-		return timeout;
+		return (Integer) engine.getPropertyValue(ProxyConstants.NETWORK_TIMEOUT_ACTION);
 	}
 	
 	@Override
 	public boolean isValid(int timeout) throws SQLException {
-		log.log(Level.FINE, "Checking whether timeout " + timeout + " milliseconds is valid");
+		int proxyTimeout = (int) engine.getPropertyValue(ProxyConstants.NETWORK_TIMEOUT_ACTION);
 		
-		if (!timeoutSet) {
-			String exc = "Timeout has not been set yet!";
-			
-			log.log(Level.FINE, exc);
-			throw new SQLException(exc);
-		}
-		
-		return timeout <= this.timeout;
+		return timeout <= proxyTimeout;
 	}
 	
 	@Override
