@@ -87,4 +87,15 @@ public class ProxyExceptionUtils {
 			}
 		}
 	}
+	
+	/**
+	 * Sometimes is useful to know whether failed action was reverted successfully and there are no inconsistencies in databases.
+	 * @param exception sql exception thrown by proxy driver
+	 * @return whether action was reverted successfully
+	 */
+	public static boolean actionRevertedSuccessfully(SQLException exception) {
+		Throwable cause = exception.getCause();
+		
+		return cause == null || !(cause instanceof ProxyException);
+	}
 }
