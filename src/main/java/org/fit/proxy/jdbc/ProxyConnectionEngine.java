@@ -7,6 +7,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.fit.proxy.jdbc.actions.IAction;
+import org.fit.proxy.jdbc.actions.ISimpleAction;
 import org.fit.proxy.jdbc.exception.ProxyExceptionUtils;
 import org.fit.proxy.jdbc.exception.ProxyException;
 
@@ -105,6 +106,19 @@ public class ProxyConnectionEngine {
 				ProxyExceptionUtils.throwAndLogAsSql(pe, Level.SEVERE);
 				
 			}
+		}
+	}
+	
+	public void runSimpleAction(ISimpleAction action) throws SQLException {
+		try {
+			action.runAction();
+			log.fine(action.getOkMessage());
+		} catch (SQLException e) {
+			//TODO templates (dependency on proxy exception refactoring)
+			String templateErrMesage = action.getErrMessage();
+			log.log(Level.WARNING, templateErrMesage, e);
+			
+			throw new SQLException(templateErrMesage, e);
 		}
 	}
 }

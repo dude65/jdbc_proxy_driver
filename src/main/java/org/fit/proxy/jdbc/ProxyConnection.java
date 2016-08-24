@@ -26,6 +26,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.fit.proxy.jdbc.actions.CatalogAction;
+import org.fit.proxy.jdbc.actions.GetWarningsAction;
 import org.fit.proxy.jdbc.actions.NetworkTimeoutAction;
 import org.fit.proxy.jdbc.actions.ReadOnlyAction;
 import org.fit.proxy.jdbc.actions.SchemaAction;
@@ -591,26 +592,9 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public SQLWarning getWarnings() throws SQLException {
+		//FIXME most probably won't work, fix is to make some getter method
 		SQLWarning res = null;
-		
-		ConnectionUnit conn = null;
-		
-		log.log(Level.FINE, "Getting warnings from default connetion");
-		
-		try {
-			conn = switcher.getDefaultConnection();
-			res = conn.getConnection().getWarnings();
-		} catch (SQLException e) {
-			log.log(Level.FINE, "Default connection does not exists");
-		}
-		
-		for (Iterator<ConnectionUnit> it = switcher.getConnectionList().iterator(); res != null && it.hasNext();) {
-			conn = it.next();
-			
-			log.log(Level.FINE, "Getting warnings from connection " + conn.getName());
-			
-			res = conn.getConnection().getWarnings();
-		}
+		engine.runSimpleAction(new GetWarningsAction(switcher, res));
 		
 		return res;
 	}
