@@ -27,6 +27,7 @@ import java.util.logging.Logger;
 
 import org.fit.proxy.jdbc.actions.CatalogAction;
 import org.fit.proxy.jdbc.actions.GetWarningsAction;
+import org.fit.proxy.jdbc.actions.ISimpleAction;
 import org.fit.proxy.jdbc.actions.NetworkTimeoutAction;
 import org.fit.proxy.jdbc.actions.ReadOnlyAction;
 import org.fit.proxy.jdbc.actions.SchemaAction;
@@ -43,7 +44,7 @@ public class ProxyConnection implements Connection {
 	private final static Logger log = Logger.getLogger(ProxyDriver.class.getName());
 	
 	private Switcher switcher;
-	private final ProxyConnectionEngine engine = new ProxyConnectionEngine();
+	private final ProxyConnectionEngine engine;
 	
 	private boolean autoCommit;
 	private boolean autoCommitSet = false;
@@ -55,11 +56,7 @@ public class ProxyConnection implements Connection {
 	
 	public ProxyConnection(Switcher s) throws SQLException {
 		switcher = s;
-		
-		setAutoCommit(true);
-		setReadOnly(false);
-		
-		log.log(Level.INFO, "Proxy connection established.");
+		engine = new ProxyConnectionEngine(switcher);
 	}
 	
 	/**
@@ -243,7 +240,7 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
-		engine.runAction(new NetworkTimeoutAction(switcher, executor, milliseconds));
+		engine.runAction(new NetworkTimeoutAction(executor, milliseconds));
 	}
 
 	@Override
@@ -364,7 +361,7 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public void setReadOnly(boolean readOnly) throws SQLException {
-		engine.runAction(new ReadOnlyAction(switcher, readOnly));
+		engine.runAction(new ReadOnlyAction(readOnly));
 	}
 
 	@Override
@@ -539,7 +536,7 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public void setCatalog(String catalog) throws SQLException {
-		engine.runAction(new CatalogAction(switcher, catalog));
+		engine.runAction(new CatalogAction(catalog));
 	}
 
 	@Override
@@ -549,7 +546,7 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public void setSchema(String schema) throws SQLException {
-		engine.runAction(new SchemaAction(switcher, schema));
+		engine.runAction(new SchemaAction(schema));
 	}
 
 	@Override
@@ -592,11 +589,10 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public SQLWarning getWarnings() throws SQLException {
-		//FIXME most probably won't work, fix is to make some getter method
-		SQLWarning res = null;
-		engine.runSimpleAction(new GetWarningsAction(switcher, res));
+		ISimpleAction action = new GetWarningsAction();
+		engine.runSimpleAction(action);
 		
-		return res;
+		return (SQLWarning) action.getResult();
 	}
 	
 	@Override

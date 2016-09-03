@@ -1,12 +1,13 @@
 package org.fit.proxy.jdbc.actions;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
+import org.fit.proxy.jdbc.ConnectionUnit;
 import org.fit.proxy.jdbc.configuration.TestConstants;
-import org.fit.proxy.jdbc.exception.ProxyException;
 
 /**
  * This is a dummy implementation of action interface used for test purposes.
@@ -16,14 +17,15 @@ import org.fit.proxy.jdbc.exception.ProxyException;
  *
  */
 public class DummyAction implements IAction {
-	private static final int COUNT_TO = 17;
 	private static final int FAIL_AT = 13;
 	private static final int FAIL_REVERSE_AT = 7;
 	
 	private final boolean failAction;
 	private final boolean failReverse;
-	private final List<Integer> testList = new ArrayList<>(COUNT_TO);
-	private final List<Integer> saveList = new ArrayList<>(COUNT_TO);
+	private Map<ConnectionUnit, Integer> valueMap;
+	private final Random random = new Random();
+	
+	private int actionCounter = 0;
 	
 	/**
 	 * Dummy action constructor, fills list with initiate values
@@ -33,40 +35,42 @@ public class DummyAction implements IAction {
 	public DummyAction(boolean failAction, boolean failReverse) {
 		this.failAction = failAction;
 		this.failReverse = failReverse;
-		
-		Random random = new Random();
-		
-		for (int i = 0; i < COUNT_TO; i++) {
-			Integer randInt = random.nextInt();
-			saveList.add(i, randInt);
-			testList.add(i, randInt);		
-		}
 	}
 
 	@Override
-	public void runAction() throws SQLException {
-		Random random = new Random();
-		
-		for (int i = 0; i < COUNT_TO; i++) {
-			Integer randInt = random.nextInt();
-			
-			if (failAction && i >= FAIL_AT) {
-				throw new SQLException("Dummy exception");
-			}
-			
-			testList.set(i, randInt);			
+	public void runAction(ConnectionUnit connection) throws SQLException {
+		if (failAction && actionCounter >= FAIL_AT) {
+			actionCounter = 0;
+			throw new SQLException("Dummy exception");
 		}
+		
+		valueMap.put(connection, random.nextInt());
+		actionCounter++;
+	}
+	
+	public Map<ConnectionUnit, Integer> initiateDefaultValues(List<ConnectionUnit> connections) {
+		valueMap = new HashMap<>();
+		
+		for (ConnectionUnit connection : connections) {
+			valueMap.put(connection, random.nextInt());
+		}
+		
+		return new HashMap<>(valueMap);
+	}
+	
+	public Map<ConnectionUnit, Integer> getValueMap() {
+		return valueMap;
 	}
 	
 	@Override
-	public void runReverseAction() throws ProxyException {		
-		for (int i = 0; i < saveList.size(); i++) {
-			if (failReverse && i >= FAIL_REVERSE_AT) {
-				throw new ProxyException("Dummy fail reverse.");
-			}
-			
-			testList.set(i, saveList.get(i));
+	public void runReverseAction(ConnectionUnit connection, Object value) throws SQLException {		
+		if (failReverse && actionCounter >= FAIL_REVERSE_AT) {
+			actionCounter = 0;
+			throw new SQLException("Dummy fail reverse.");
 		}
+		
+		valueMap.put(connection, (Integer) value);
+		actionCounter++;
 	}
 
 	@Override
@@ -89,8 +93,14 @@ public class DummyAction implements IAction {
 		return failAction;
 	}
 
-	public List<Integer> getTestList() {
-		return testList;
+	@Override
+	public Object getSaveValue(ConnectionUnit connection) throws SQLException {
+		return valueMap.get(connection);
+	}
+
+	@Override
+	public Object getResult() {
+		return null;
 	}
 
 }

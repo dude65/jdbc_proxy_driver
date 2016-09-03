@@ -1,7 +1,9 @@
 package org.fit.proxy.jdbc.exception;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.sql.SQLException;
+import java.util.Date;
+
+import org.fit.proxy.jdbc.ConnectionUnit;
 
 /**
  * Proxy exception is contained of list of other exceptions
@@ -9,70 +11,27 @@ import java.util.List;
  * @author Ondřej Marek
  *
  */
-public class ProxyException extends Exception {
+public class ProxyException extends SQLException {
 	private static final long serialVersionUID = 6458125935055620145L;
-	private final String message;
-	private Throwable cause;
+	private final Date date = new Date(System.currentTimeMillis());
+	private final ConnectionUnit failConnection;
 	
-	public ProxyException(String message) {
-		this.message = message;
+	public ProxyException(String message, ConnectionUnit failConnection) {
+		super(message);
+		this.failConnection = failConnection;
 	}
 	
-	private List<ExceptionUnit> exceptionList = new LinkedList<>();
-	
-	/**
-	 * add a new exception to the list
-	 * @param exception exception
-	 */
-	public void addException(ExceptionUnit exception) {
-		exceptionList.add(exception);
+	public ProxyException(String message, Throwable cause, ConnectionUnit failConnection) {
+		super(message, cause);
+		this.failConnection = failConnection;
 	}
-	
-	/**
-	 * add a new exception to the list
-	 * @param message message of the exception
-	 */
-	public void addException(String message) {
-		exceptionList.add(new ExceptionUnit(message, null));
+
+	public ConnectionUnit getFailConnection() {
+		return failConnection;
 	}
-	
-	/**
-	 * add a new exception to the list
-	 * @param message message of the exception
-	 * @param exception cause
-	 */
-	public void addException(String message, Exception exception) {
-		exceptionList.add(new ExceptionUnit(message, exception));
-	}
-	
-	/**
-	 * Returns true if there are some exceptions in the list
-	 * @return is throwable
-	 */
-	public boolean isThrowable() {
-		return !exceptionList.isEmpty() || cause != null;
-	}
-	
-	/**
-	 * Returns copy of the exception list
-	 * @return exception list
-	 */
-	public List<ExceptionUnit> getExceptions() {
-		return new LinkedList<>(exceptionList);
-	}
-	
-	@Override
-	public String getMessage() {
-		return message;
-	}
-	
-	@Override
-	public synchronized Throwable getCause() {
-		return cause;
-	}
-	
-	public void setCause(Throwable cause) {
-		this.cause = cause;
+
+	public Date getDate() {
+		return date;
 	}
 
 }

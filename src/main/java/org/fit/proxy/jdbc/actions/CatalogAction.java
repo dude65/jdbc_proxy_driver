@@ -1,57 +1,24 @@
 package org.fit.proxy.jdbc.actions;
 
-import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import org.fit.proxy.jdbc.ConnectionUnit;
-import org.fit.proxy.jdbc.Switcher;
 import org.fit.proxy.jdbc.configuration.ProxyConstants;
-import org.fit.proxy.jdbc.exception.ProxyException;
-import org.fit.proxy.jdbc.exception.ProxyExceptionUtils;
 
 public class CatalogAction implements IAction {
-	private final Switcher switcher;
 	private final String catalog;
-	private final Map<ConnectionUnit, String> save = new HashMap<>();
-	
-	public CatalogAction(Switcher switcher, String catalog) {
-		this.switcher = switcher;
+	public CatalogAction(String catalog) {
 		this.catalog = catalog;
 	}
 	
 	@Override
-	public void runAction() throws SQLException {
-		List<ConnectionUnit> connections = switcher.getConnectionList();
-		
-		for (ConnectionUnit u : connections) {
-			Connection connection = u.getConnection();
-			
-			save.put(u, connection.getCatalog());
-			connection.setCatalog(catalog);
-		}
+	public void runAction(ConnectionUnit connection) throws SQLException {		
+		connection.getConnection().setCatalog(catalog);
 	}
 
 	@Override
-	public void runReverseAction() throws ProxyException {
-		ProxyException exception = new ProxyException("Unable to set back catalog.");
-		
-		for (Entry<ConnectionUnit, String> entry : save.entrySet()) {
-			ConnectionUnit connection = entry.getKey();
-			String saveCatalog = entry.getValue();
-			
-			try {
-				connection.getConnection().setCatalog(saveCatalog);
-			} catch (SQLException sqle) {
-				StringBuilder message = new StringBuilder("Unable to set back catalog in connection ").append(connection.getName()).append(" to value: ").append(catalog);
-				exception.addException(message.toString(), sqle);
-			}
-		}
-		
-		ProxyExceptionUtils.throwIfPossible(exception);
+	public void runReverseAction(ConnectionUnit connection, Object value) throws SQLException {
+		connection.getConnection().setCatalog((String) value);
 	}
 
 	@Override
@@ -72,6 +39,16 @@ public class CatalogAction implements IAction {
 	@Override
 	public Object getPropertyValue() {
 		return catalog;
+	}
+
+	@Override
+	public Object getSaveValue(ConnectionUnit connection) throws SQLException {
+		return connection.getConnection().getCatalog();
+	}
+
+	@Override
+	public Object getResult() {
+		return null;
 	}
 
 }

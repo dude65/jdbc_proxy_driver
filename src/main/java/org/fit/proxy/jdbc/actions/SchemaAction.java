@@ -1,59 +1,25 @@
 package org.fit.proxy.jdbc.actions;
 
-import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import org.fit.proxy.jdbc.ConnectionUnit;
-import org.fit.proxy.jdbc.Switcher;
 import org.fit.proxy.jdbc.configuration.ProxyConstants;
-import org.fit.proxy.jdbc.exception.ProxyException;
-import org.fit.proxy.jdbc.exception.ProxyExceptionUtils;
 
 public class SchemaAction implements IAction {
-	private final Switcher switcher;
 	private final String schema;
-	private final Map<ConnectionUnit, String> save = new HashMap<>();
 
-	public SchemaAction(Switcher switcher, String schema) {
-		this.switcher = switcher;
+	public SchemaAction(String schema) {
 		this.schema = schema;
 	}
 
 	@Override
-	public void runAction() throws SQLException {
-		List<ConnectionUnit> connections = switcher.getConnectionList();
-		
-		for (ConnectionUnit u : connections) {
-			Connection connection = u.getConnection();
-			
-			save.put(u, connection.getSchema());
-			connection.setSchema(schema);
-		}
-		
+	public void runAction(ConnectionUnit connection) throws SQLException {
+		connection.getConnection().setSchema(schema);
 	}
 
 	@Override
-	public void runReverseAction() throws ProxyException {
-		ProxyException exception = new ProxyException("Unable to set back schema.");
-		
-		for (Entry<ConnectionUnit, String> entry : save.entrySet()) {
-			ConnectionUnit connection = entry.getKey();
-			String saveSchema = entry.getValue();
-			
-			try {
-				connection.getConnection().setSchema(saveSchema);
-			} catch (SQLException sqle) {
-				StringBuilder message = new StringBuilder("Unable to set back schema in connection ").append(connection.getName()).append(" to value: ").append(schema);
-				exception.addException(message.toString(), sqle);
-			}
-		}
-		
-		ProxyExceptionUtils.throwIfPossible(exception);
-		
+	public void runReverseAction(ConnectionUnit connection, Object value) throws SQLException {
+		connection.getConnection().setSchema((String) value);
 	}
 
 	@Override
@@ -74,6 +40,16 @@ public class SchemaAction implements IAction {
 	@Override
 	public Object getPropertyValue() {
 		return schema;
+	}
+
+	@Override
+	public Object getSaveValue(ConnectionUnit connection) throws SQLException {
+		return connection.getConnection().getSchema();
+	}
+
+	@Override
+	public Object getResult() {
+		return null;
 	}
 
 }
