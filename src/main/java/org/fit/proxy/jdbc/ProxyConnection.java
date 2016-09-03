@@ -25,7 +25,9 @@ import java.util.concurrent.Executor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.fit.proxy.jdbc.actions.AbortAction;
 import org.fit.proxy.jdbc.actions.CatalogAction;
+import org.fit.proxy.jdbc.actions.ClearWarningsAction;
 import org.fit.proxy.jdbc.actions.GetWarningsAction;
 import org.fit.proxy.jdbc.actions.ISimpleAction;
 import org.fit.proxy.jdbc.actions.NetworkTimeoutAction;
@@ -556,35 +558,7 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public void clearWarnings() throws SQLException {
-		List<ConnectionUnit> l = switcher.getConnectionList();
-		String exc = new String();
-		
-		log.log(Level.INFO, "Clearing warnings");
-		
-		for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
-			ConnectionUnit cu = it.next();
-			
-			log.log(Level.FINE, "Clearing warnings in connection " + cu.getName());
-			try {
-				cu.getConnection().clearWarnings();
-			} catch (SQLException e) {
-				if (! exc.isEmpty()) {
-					exc += '\n';
-				}
-				
-				String message = "Unable to clear warnings in connection: " + cu.getName() + ". Original message: " + e.getMessage();
-				
-				log.log(Level.SEVERE, message);
-				exc += message;
-			}
-		}
-		
-		if (! exc.isEmpty()) {
-			log.log(Level.SEVERE, "Whole message:" + exc);
-			throw new SQLException(exc);
-		}
-		
-		log.log(Level.INFO, "Warnings cleared successfully.");
+		engine.runSimpleAction(new ClearWarningsAction());
 	}
 	
 	@Override
@@ -662,34 +636,7 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public void abort(Executor executor) throws SQLException {
-		List<ConnectionUnit> l = switcher.getConnectionList();
-		String exc = new String();
-		
-		log.log(Level.INFO, "Aborting...");
-		
-		for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
-			ConnectionUnit cu = it.next();
-			
-			log.log(Level.FINE, "Aborting connection " + cu.getName());
-			
-			try {
-				cu.getConnection().abort(executor);
-			} catch (SQLException e) {
-				if (! exc.isEmpty()) {
-					exc += '\n';
-				}
-				
-				String message = "Unable to abort connection: " + cu.getName() + ". Original message: " + e.getMessage();
-				
-				log.log(Level.SEVERE, message);
-				exc += message;
-			}
-		}
-		
-		if (! exc.isEmpty()) {
-			log.log(Level.SEVERE, "Whole message: " + exc);
-			throw new SQLException(exc);
-		}
+		engine.runSimpleAction(new AbortAction(executor));
 	}
 	
 	@Override
