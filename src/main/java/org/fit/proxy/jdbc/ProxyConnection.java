@@ -15,6 +15,7 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.fit.proxy.jdbc.actions.AbortAction;
+import org.fit.proxy.jdbc.actions.AutoCommitAction;
 import org.fit.proxy.jdbc.actions.CatalogAction;
 import org.fit.proxy.jdbc.actions.ClearWarningsAction;
 import org.fit.proxy.jdbc.actions.GetWarningsAction;
@@ -33,6 +35,7 @@ import org.fit.proxy.jdbc.actions.ISimpleAction;
 import org.fit.proxy.jdbc.actions.NetworkTimeoutAction;
 import org.fit.proxy.jdbc.actions.ReadOnlyAction;
 import org.fit.proxy.jdbc.actions.SchemaAction;
+import org.fit.proxy.jdbc.actions.TypeMapAction;
 import org.fit.proxy.jdbc.configuration.ProxyConstants;
 
 /**
@@ -48,13 +51,7 @@ public class ProxyConnection implements Connection {
 	private Switcher switcher;
 	private final ProxyConnectionEngine engine;
 	
-	private boolean autoCommit;
-	private boolean autoCommitSet = false;
-	
 	private ProxySavepoint currTransaction;
-	
-	private Map<String, Class<?>> typeMap = null;
-	
 	
 	public ProxyConnection(Switcher s) throws SQLException {
 		switcher = s;
@@ -259,76 +256,12 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public void setAutoCommit(boolean autoCommit) throws SQLException {
-		List<ConnectionUnit> l = switcher.getConnectionList();
-		Map<ConnectionUnit, Boolean> save = new HashMap<>();
-		ConnectionUnit u = null;
-		
-		log.log(Level.INFO, "Setting auto commit to value = " + autoCommit);
-		
-		try {
-			for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
-				u = it.next();
-				Connection c = u.getConnection();
-				
-				log.log(Level.FINE, "Saving auto commit in connection " + u.getName());
-				save.put(u, c.getAutoCommit());
-				
-				log.log(Level.FINE, "Saving auto commit in connection " + u.getName());
-				c.setAutoCommit(autoCommit);
-			}
-			
-		} catch (SQLException e) {
-			String exc = new String();
-			
-			log.log(Level.SEVERE, "Error occured when setting auto commit in connection " + u.getName() + ". Setting auto commit values back.");
-			
-			for (Entry<ConnectionUnit, Boolean> entry : save.entrySet()) {
-				ConnectionUnit cu = entry.getKey();
-				Boolean commit = entry.getValue();
-				
-				try {
-					cu.getConnection().setAutoCommit(commit);
-				} catch (SQLException sqle) {
-					autoCommitSet = false;
-					
-					String message = "Unable to set back auto commit in connection " + cu.getName() + " to value: " + commit;
-					
-					log.log(Level.SEVERE, message);
-					exc += "\n" + message;
-				}
-			}
-			
-			
-			String message = "Unable to change auto commit mode in connection " + u.getName() + ". Original message: " + e.getMessage() + exc;
-			
-			log.log(Level.SEVERE, "Whole message: " + message);
-			throw new SQLException(message);
-		}
-		
-		if (!autoCommit) {
-			log.log(Level.FINE, "Setting savepoint.");
-			currTransaction = (ProxySavepoint) setSavepoint();
-		}
-		
-		log.log(Level.INFO, "Setting auto commit to value " + autoCommit + " was successful.");
-		
-		autoCommitSet = true;
-		this.autoCommit = autoCommit;
-		
+		engine.runAction(new AutoCommitAction(autoCommit));
 	}
 
 	@Override
 	public boolean getAutoCommit() throws SQLException {
-		log.log(Level.FINE, "Getting auto commit");
-		
-		if (!autoCommitSet) {
-			String exc = "Auto commit has not been set yet!";
-			
-			log.log(Level.SEVERE, exc);
-			throw new SQLException(exc);
-		}
-		
-		return autoCommit;
+		return (Boolean) engine.getPropertyValue(ProxyConstants.AUTO_COMMIT_ACTION);
 	}
 
 	@Override
@@ -569,69 +502,21 @@ public class ProxyConnection implements Connection {
 		return (SQLWarning) action.getResult();
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public Map<String, Class<?>> getTypeMap() throws SQLException {
-		log.log(Level.FINE, "Getting type map");
+		boolean initiated = engine.isPropertyInitiated(ProxyConstants.TYPE_MAP_ACTION);
 		
-		if (typeMap == null) {
-			String exc = "Typemap is not set!";
-			
-			log.log(Level.SEVERE, exc);
-			throw new SQLException(exc);
+		if (!initiated) {
+			return Collections.emptyMap();
 		}
 		
-		return typeMap;
+		return (Map<String, Class<?>>) engine.getPropertyValue(ProxyConstants.TYPE_MAP_ACTION);
 	}
 
 	@Override
 	public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
-		List<ConnectionUnit> l = switcher.getConnectionList();
-		Map<ConnectionUnit, Map<String, Class<?>>> save = new HashMap<>();
-		ConnectionUnit u = null;
-		
-		log.log(Level.INFO, "Setting type map");
-		try {
-			for (Iterator<ConnectionUnit> it = l.iterator(); it.hasNext();) {
-				u = it.next();
-				Connection c = u.getConnection();
-				
-				log.log(Level.FINE, "Saving type map in connection " + u.getName());
-				save.put(u, c.getTypeMap());
-				
-				log.log(Level.FINE, "Setting type map in connection " + u.getName());
-				c.setTypeMap(map);
-			}
-			
-		} catch (SQLException e) {
-			String exc = new String();
-			
-			log.log(Level.SEVERE, "Setting type map failed in connection " + u.getName() + ". Setting type mapas back.");
-			
-			for (Entry<ConnectionUnit, Map<String, Class<?>>> entry : save.entrySet()) {
-				ConnectionUnit cu = entry.getKey();
-				Map<String, Class<?>> typeMap = entry.getValue();
-				
-				try {
-					cu.getConnection().setTypeMap(typeMap);
-				} catch (SQLException sqle) {
-					//schemaSet = false; bug???
-					
-					String message = "Unable to set back type map in connection " + cu.getName();
-					
-					log.log(Level.SEVERE, message);
-					exc += "\n" + message;
-				}
-			}
-			
-			String message = "Unable to change type map in connection " + u.getName() + ". Original message: " + e.getMessage() + exc;
-			
-			log.log(Level.SEVERE, "Whole message: " + message);
-			throw new SQLException(message);
-		}
-		
-		log.log(Level.INFO, "Type map was changed successfully.");
-		
-		typeMap = map;
+		engine.runAction(new TypeMapAction(map));
 	}
 	
 	@Override
@@ -641,23 +526,12 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public String getClientInfo(String name) throws SQLException {
-		log.log(Level.FINE, "Getting proxy property named " + name);
-		
 		String res = switcher.getProperties().getProperty(name);
-		
-		if (res == null) {
-			String exc = "Property " + name + "is not contained.";
-			
-			log.log(Level.WARNING, exc);
-			throw new SQLException(exc);
-		}
-		
 		return res;
 	}
 
 	@Override
 	public Properties getClientInfo() throws SQLException {
-		log.log(Level.FINE, "Getting proxy properties");
 		return new Properties(switcher.getProperties());
 	}
 	

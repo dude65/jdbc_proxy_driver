@@ -73,6 +73,15 @@ public class ProxyConnectionEngine {
 	}
 	
 	/**
+	 * Checks if the property was even initiated
+	 * @param name property name
+	 * @return whether property was initiated
+	 */
+	public boolean isPropertyInitiated(String name) {
+		return connectionProperties.containsKey(name);
+	}
+	
+	/**
 	 * Returns a value by given name
 	 * @param name property name
 	 * @return property value
