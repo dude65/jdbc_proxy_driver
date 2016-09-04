@@ -11,4 +11,6 @@ public class ProxyConstants {
 	public static final String NETWORK_TIMEOUT_ACTION = "networkTimeout";
 	public static final String AUTO_COMMIT_ACTION = "autoCommit";
 	public static final String TYPE_MAP_ACTION = "typeMap";
+	
+	public static final String CLOSE_CONNECTION = "close";
 }

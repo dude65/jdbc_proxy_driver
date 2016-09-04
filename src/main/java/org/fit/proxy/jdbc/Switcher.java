@@ -154,9 +154,10 @@ public class Switcher {
 	}
 	
 	/**
-	 * It closes all connections.
+	 * It closes all connections. Deprecated now. TODO refactor switcher and tests
 	 * @throws SQLException - when some connections fails to close, then the exception with names of connections and descriptions of exception are thrown.
 	 */
+	@Deprecated
 	public void closeConnections() throws SQLException {
 		Map<String, SQLException> exList = new TreeMap<>();
 		List<Connection> notClosed = new LinkedList<>();
@@ -242,26 +243,6 @@ public class Switcher {
 		log.log(Level.INFO, "Getting list of failed connections.");
 		
 		return new LinkedList<Connection>(failedList);
-	}
-	
-	/**
-	 * Test if connections are closed.
-	 * 
-	 * @return - returns true if the closeConnections() was called
-	 * @throws SQLException - when some databases were not closed, the exception is thrown
-	 */
-	public boolean isClosed() throws SQLException {
-		if (!(open || failedList.isEmpty())) {
-			String exc = "There was an attempt to close database connections but it was not successfull. Use method getFailedConnection to get a list of them.";
-			
-			
-			log.log(Level.SEVERE, exc);
-			throw new SQLException(exc);
-		}
-		
-		log.log(Level.FINE, "isClosed = " + !open);
-		
-		return !open;
 	}
 	
 	@Override

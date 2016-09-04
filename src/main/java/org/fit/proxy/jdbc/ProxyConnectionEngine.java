@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 
 import org.fit.proxy.jdbc.actions.IAction;
 import org.fit.proxy.jdbc.actions.ISimpleAction;
+import org.fit.proxy.jdbc.configuration.ProxyConstants;
 import org.fit.proxy.jdbc.exception.ProxyException;
 import org.fit.proxy.jdbc.exception.ProxyExceptionUtils;
 
@@ -29,7 +30,7 @@ public class ProxyConnectionEngine {
 	/**
 	 * Map, that contains properties that are set in proxy connection
 	 */
-	Map<String, ConnectionPropertiesUnit> connectionProperties = new HashMap<>();
+	private Map<String, ConnectionPropertiesUnit> connectionProperties = new HashMap<>();
 	
 	/**
 	 * Sets property
@@ -99,11 +100,23 @@ public class ProxyConnectionEngine {
 	}
 	
 	/**
+	 * method that throws an exception when connections are closed
+	 * @throws SQLException if connections are closed
+	 */
+	public void ensureConnectionClosed() throws SQLException {
+		if (isPropertySet(ProxyConstants.CLOSE_CONNECTION)) {
+			throw new SQLException("Proxy connection has been already closed!");
+		}
+	}
+	
+	/**
 	 * Runs action for Proxy Connection
 	 * @param action
 	 * @throws ProxyException if something goes wrong
 	 */
-	public void runAction(IAction action) throws ProxyException {
+	public void runAction(IAction action) throws SQLException {
+		ensureConnectionClosed();
+		
 		ActionUnit actionInfo = new ActionUnit(switcher);
 		
 		try {
@@ -120,6 +133,8 @@ public class ProxyConnectionEngine {
 	}
 	
 	public void runSimpleAction(ISimpleAction action) throws SQLException {
+		ensureConnectionClosed();
+		
 		ActionUnit actionInfo = new ActionUnit(switcher);
 		
 		try {

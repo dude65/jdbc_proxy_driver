@@ -30,6 +30,7 @@ import org.fit.proxy.jdbc.actions.AbortAction;
 import org.fit.proxy.jdbc.actions.AutoCommitAction;
 import org.fit.proxy.jdbc.actions.CatalogAction;
 import org.fit.proxy.jdbc.actions.ClearWarningsAction;
+import org.fit.proxy.jdbc.actions.CloseConnectionAction;
 import org.fit.proxy.jdbc.actions.GetWarningsAction;
 import org.fit.proxy.jdbc.actions.ISimpleAction;
 import org.fit.proxy.jdbc.actions.NetworkTimeoutAction;
@@ -207,12 +208,16 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public void close() throws SQLException {
-		switcher.closeConnections();
+		try {
+			engine.runSimpleAction(new CloseConnectionAction());
+		} finally {
+			engine.setProperty(ProxyConstants.CLOSE_CONNECTION, null);
+		}
 	}
 	
 	@Override
 	public boolean isClosed() throws SQLException {
-		return switcher.isClosed();
+		return engine.isPropertySet(ProxyConstants.CLOSE_CONNECTION);
 	}
 	
 	@Override
