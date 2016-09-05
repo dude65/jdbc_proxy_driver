@@ -126,31 +126,12 @@ public class Switcher {
 	}
 	
 	/**
-	 * Returns connection specified by name.
-	 * 
-	 * @param name of connection
-	 * @return connection by name
-	 * @throws SQLException - name of connection does not match to any connection
+	 * Returns specified connection by name
+	 * @param name connection name
+	 * @return connection or null if not found
 	 */
-	public Connection getConnectionByName(String name) throws SQLException {
-		ConnectionUnit cu = connectList.get(name);
-		Connection res = null;
-		
-		log.log(Level.FINE, "Getting connection by name");
-		
-		if (cu != null) {
-			res = cu.getConnection();
-			
-			log.log(Level.FINE, "Connection named " + name + " was found");
-		} else {
-			String exc = "Cannot get database connection. Database connection named " + name + " does not exists.";
-			
-			log.log(Level.SEVERE, exc);
-			
-			throw new SQLException();
-		}
-		
-		return res;
+	public ConnectionUnit getConnectionByName(String name) {		
+		return connectList.get(name);
 	}
 	
 	/**

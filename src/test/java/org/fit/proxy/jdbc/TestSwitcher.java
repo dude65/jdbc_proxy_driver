@@ -26,7 +26,7 @@ public class TestSwitcher {
 	
 	@Test
 	public void test1() throws SQLException {
-		Assert.assertEquals(s.getConnection("SELECT * FROM persons"), s.getConnectionByName("database1"));
+		Assert.assertEquals(s.getConnection("SELECT * FROM persons"), s.getConnectionByName("database1").getConnection());
 	}
 	
 	@Test(expected=SQLException.class)
@@ -40,13 +40,13 @@ public class TestSwitcher {
 	@Test
 	public void test3() throws SQLException {
 		s.unsetDefaultDatabase();
-		Assert.assertEquals(s.getConnection("INSERT INTO `homes` (`ID`, `street`, `city`, `houseNumber`, `zipCode`) VALUES (4, 'Catlover's', 'London', 8, 11111);"), s.getConnectionByName("database3"));
+		Assert.assertEquals(s.getConnection("INSERT INTO `homes` (`ID`, `street`, `city`, `houseNumber`, `zipCode`) VALUES (4, 'Catlover's', 'London', 8, 11111);"), s.getConnectionByName("database3").getConnection());
 	}
 	
 	@Test
 	public void test4() throws SQLException {
 		s.unsetDefaultDatabase();
-		Assert.assertEquals(s.getConnection("UPDATE `homes` SET `city` = 'Madrid` WHERE `ID` = 1"), s.getConnectionByName("database2"));
+		Assert.assertEquals(s.getConnection("UPDATE `homes` SET `city` = 'Madrid` WHERE `ID` = 1"), s.getConnectionByName("database2").getConnection());
 	}
 	
 	@Test(expected=SQLException.class)
@@ -79,13 +79,13 @@ public class TestSwitcher {
 	@Test
 	public void test8() throws SQLException {
 		s.setDefaultDatabase("database2");
-		Assert.assertEquals(s.getConnection("eg wesw"), s.getConnectionByName("database2"));
+		Assert.assertEquals(s.getConnection("eg wesw"), s.getConnectionByName("database2").getConnection());
 	}
 	
 	@Test
 	public void test9() throws SQLException {
 		s.setDefaultDatabase("database2");
-		Assert.assertEquals(s.getConnection(" SELECT * FROM persons"), s.getConnectionByName("database2"));
+		Assert.assertEquals(s.getConnection(" SELECT * FROM persons"), s.getConnectionByName("database2").getConnection());
 	}
 	
 	@Test(expected=SQLException.class)

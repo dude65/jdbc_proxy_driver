@@ -49,13 +49,14 @@ import org.fit.proxy.jdbc.configuration.ProxyConstants;
 public class ProxyConnection implements Connection {
 	private final static Logger log = Logger.getLogger(ProxyDriver.class.getName());
 	
+	@Deprecated
 	private Switcher switcher;
 	private final ProxyConnectionEngine engine;
 	
 	private ProxySavepoint currTransaction;
 	
-	public ProxyConnection(Switcher s) throws SQLException {
-		switcher = s;
+	public ProxyConnection(Switcher switcher) throws SQLException {
+		this.switcher = switcher;
 		engine = new ProxyConnectionEngine(switcher);
 	}
 	
@@ -64,10 +65,10 @@ public class ProxyConnection implements Connection {
 	 * 
 	 * @param name of connection
 	 * @return connection by name
-	 * @throws SQLException - name of connection does not match to any connection
+	 * @throws SQLException - connection is closed
 	 */
-	public Connection getConnectionByName(String name) throws SQLException {
-		return switcher.getConnectionByName(name);
+	public ConnectionUnit getConnectionByName(String name) throws SQLException {
+		return engine.getConnectionByName(name);
 	}
 	
 	/**
@@ -77,24 +78,15 @@ public class ProxyConnection implements Connection {
 	 * @throws SQLException - name of connection does not match to any connection
 	 */
 	public void setDefaultDatabase(String name) throws SQLException {
-		switcher.setDefaultDatabase(name);
+		engine.setDefaultDatabase(name);
 	}
 	
 	/**
 	 * Sets default database connection to null.
+	 * @throws SQLException if connection is closed
 	 */
-	public void unsetDefaultDatabase() {
-		switcher.unsetDefaultDatabase();
-	}
-	
-	/**
-	 * Returns the list of failed connections from the last time, when exception was thrown. It is useful when handling exception.
-	 * 
-	 * @return - the list of failed connections (new object), if no connection ever failed, then returns empty list
-	 */
-	@Deprecated
-	public List<Connection> getFailedConnections() {
-		return switcher.getFailedConnections();
+	public void unsetDefaultDatabase() throws SQLException {
+		engine.unsetDefaultDatabase();
 	}
 	
 	/**
@@ -137,7 +129,9 @@ public class ProxyConnection implements Connection {
 		}
 	}
 	
-	public Switcher getSwitcher() {		
+	@Deprecated
+	public Switcher getSwitcher() throws SQLException {
+		engine.ensureConnectionIsAlive();
 		return switcher;
 	}
 	
@@ -146,63 +140,72 @@ public class ProxyConnection implements Connection {
 	@Override
 	public PreparedStatement prepareStatement(String sql) throws SQLException {
 		log.log(Level.FINE, "Prepare statement, sql(" + sql + ")");
-		Connection c = switcher.getConnection(sql);
+		
+		Connection c = engine.getConnection(sql);
 		return c.prepareStatement(sql);
 	}
 
 	@Override
 	public CallableStatement prepareCall(String sql) throws SQLException {
 		log.log(Level.FINE, "Prepare call, sql(" + sql + ")");
-		Connection c = switcher.getConnection(sql);
+		
+		Connection c = engine.getConnection(sql);
 		return c.prepareCall(sql);
 	}
 	
 	@Override
 	public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
 		log.log(Level.FINE, "Prepare statement, sql(" + sql + "), resultSetType = " + resultSetType + ", resultSetConcurrency = " + resultSetConcurrency);
-		Connection c = switcher.getConnection(sql);
+		
+		Connection c = engine.getConnection(sql);
 		return c.prepareStatement(sql, resultSetType, resultSetConcurrency);
 	}
 
 	@Override
 	public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
 		log.log(Level.FINE, "Prepare call, sql(" + sql + "), resultSetType = " + resultSetType + ", resultSetConcurrency = " + resultSetConcurrency);
-		Connection c = switcher.getConnection(sql);
+		
+		Connection c = engine.getConnection(sql);
 		return c.prepareCall(sql, resultSetType, resultSetConcurrency);
 	}
 	
 	@Override
 	public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
 		log.log(Level.FINE, "Prepare statement, sql(" + sql + "), resultSetType = " + resultSetType + ", resultSetConcurrency = " + resultSetConcurrency + ", resultSetHoldability = " + resultSetHoldability);		
-		Connection c = switcher.getConnection(sql);
+		
+		Connection c = engine.getConnection(sql);
 		return c.prepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
 	}
 
 	@Override
 	public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
 		log.log(Level.FINE, "Prepare call, sql(" + sql + "), resultSetType = " + resultSetType + ", resultSetConcurrency = " + resultSetConcurrency + ", resultSetHoldability = " + resultSetHoldability);
-		Connection c = switcher.getConnection(sql);
+		
+		Connection c = engine.getConnection(sql);
 		return c.prepareCall(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
 	}
 
 	@Override
 	public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) throws SQLException {
 		log.log(Level.FINE, "Prepare statement, sql(" + sql + "), autoGeneratedKeys = " + autoGeneratedKeys);
-		Connection c = switcher.getConnection(sql);
+		
+		Connection c = engine.getConnection(sql);
 		return c.prepareStatement(sql, autoGeneratedKeys);
 	}
 
 	@Override
 	public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException {
 		log.log(Level.FINE, "Prepare statement, sql(" + sql + "), columnIndexes = " + columnIndexes);
-		Connection c = switcher.getConnection(sql);
+		
+		Connection c = engine.getConnection(sql);
 		return c.prepareStatement(sql, columnIndexes);
 	}
 
 	@Override
 	public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
 		log.log(Level.FINE, "Prepare statement, sql(" + sql + "), columnNames = " + columnNames);
-		Connection c = switcher.getConnection(sql);
+		
+		Connection c = engine.getConnection(sql);
 		return c.prepareStatement(sql, columnNames);
 	}
 	
@@ -222,23 +225,25 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public String nativeSQL(String sql) throws SQLException {
-		log.log(Level.FINE, "Getting native sql(" + sql + ")");
-		Connection c = switcher.getConnection(sql);
+		Connection c = engine.getConnection(sql);
 		return c.nativeSQL(sql);
 	}
 	
 	@Override
 	public Statement createStatement() throws SQLException {
+		engine.ensureConnectionIsAlive();
 		return new ProxyStatement(this);
 	}
 
 	@Override
 	public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
+		engine.ensureConnectionIsAlive();
 		return new ProxyStatement(this, resultSetType, resultSetConcurrency);
 	}
 	
 	@Override
 	public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
+		engine.ensureConnectionIsAlive();
 		return new ProxyStatement(this, resultSetType, resultSetConcurrency, resultSetHoldability);
 	}
 	
@@ -467,9 +472,7 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public DatabaseMetaData getMetaData() throws SQLException {
-		log.log(Level.FINE, "Getting database info from default connection");
-		
-		Connection c = switcher.getDefaultConnection().getConnection();
+		Connection c = engine.getDefaultConnection().getConnection();
 		
 		return c.getMetaData();
 	}
@@ -510,6 +513,7 @@ public class ProxyConnection implements Connection {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Map<String, Class<?>> getTypeMap() throws SQLException {
+		engine.ensureConnectionIsAlive();
 		boolean initiated = engine.isPropertyInitiated(ProxyConstants.TYPE_MAP_ACTION);
 		
 		if (!initiated) {
@@ -537,7 +541,7 @@ public class ProxyConnection implements Connection {
 
 	@Override
 	public Properties getClientInfo() throws SQLException {
-		return new Properties(switcher.getProperties());
+		return (Properties) switcher.getProperties().clone();
 	}
 	
 	//Unsupported

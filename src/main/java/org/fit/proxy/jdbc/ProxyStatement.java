@@ -60,14 +60,14 @@ public class ProxyStatement implements Statement {
 	
 	List<CallableStatement> batchList = new LinkedList<>();
 	
-	public ProxyStatement(ProxyConnection pc) {
+	public ProxyStatement(ProxyConnection pc) throws SQLException {
 		connection = pc;
 		resultSetCase = 1;
 		
 		initiateStatement();
 	}
 	
-	public ProxyStatement(ProxyConnection pc, int resultSetType, int resultSetConcurrency) {
+	public ProxyStatement(ProxyConnection pc, int resultSetType, int resultSetConcurrency) throws SQLException {
 		connection = pc;
 		resultSetCase = 2;
 		
@@ -76,7 +76,7 @@ public class ProxyStatement implements Statement {
 		initiateStatement();
 	}
 	
-	public ProxyStatement(ProxyConnection pc, int resultSetType, int resultSetConcurrency, int resultSetHoldability) {
+	public ProxyStatement(ProxyConnection pc, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
 		connection = pc;
 		resultSetCase = 3;
 		
@@ -89,8 +89,9 @@ public class ProxyStatement implements Statement {
 	
 	/**
 	 * Initiates 
+	 * @throws SQLException 
 	 */
-	private final void initiateStatement() {
+	private final void initiateStatement() throws SQLException {
 		Switcher s = connection.getSwitcher();
 		
 		try {

@@ -1,5 +1,6 @@
 package org.fit.proxy.jdbc;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
@@ -89,6 +90,8 @@ public class ProxyConnectionEngine {
 	 * @throws SQLException if property has not been set, yet.
 	 */
 	public Object getPropertyValue(String name) throws SQLException {
+		ensureConnectionIsAlive();
+		
 		if (!isPropertySet(name)) {
 			String message = new StringBuilder("Attempting to get property named ").append(name).append(" which has not been set, yet!").toString();
 			log.warning(message);
@@ -103,10 +106,35 @@ public class ProxyConnectionEngine {
 	 * method that throws an exception when connections are closed
 	 * @throws SQLException if connections are closed
 	 */
-	public void ensureConnectionClosed() throws SQLException {
+	public void ensureConnectionIsAlive() throws SQLException {
 		if (isPropertySet(ProxyConstants.CLOSE_CONNECTION)) {
 			throw new SQLException("Proxy connection has been already closed!");
 		}
+	}
+	
+	public void setDefaultDatabase(String database) throws SQLException {
+		ensureConnectionIsAlive();
+		switcher.setDefaultDatabase(database);
+	}
+	
+	public void unsetDefaultDatabase() throws SQLException {
+		ensureConnectionIsAlive();
+		switcher.unsetDefaultDatabase();
+	}
+	
+	public ConnectionUnit getConnectionByName(String name) throws SQLException {
+		ensureConnectionIsAlive();
+		return switcher.getConnectionByName(name);
+	}
+	
+	public Connection getConnection(String sql) throws SQLException {
+		ensureConnectionIsAlive();
+		return switcher.getConnection(sql);
+	}
+	
+	public ConnectionUnit getDefaultConnection() throws SQLException {
+		ensureConnectionIsAlive();
+		return switcher.getDefaultConnection();
 	}
 	
 	/**
@@ -115,7 +143,7 @@ public class ProxyConnectionEngine {
 	 * @throws ProxyException if something goes wrong
 	 */
 	public void runAction(IAction action) throws SQLException {
-		ensureConnectionClosed();
+		ensureConnectionIsAlive();
 		
 		ActionUnit actionInfo = new ActionUnit(switcher);
 		
@@ -133,7 +161,7 @@ public class ProxyConnectionEngine {
 	}
 	
 	public void runSimpleAction(ISimpleAction action) throws SQLException {
-		ensureConnectionClosed();
+		ensureConnectionIsAlive();
 		
 		ActionUnit actionInfo = new ActionUnit(switcher);
 		
