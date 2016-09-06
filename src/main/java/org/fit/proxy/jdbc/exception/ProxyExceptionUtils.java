@@ -22,7 +22,7 @@ public class ProxyExceptionUtils {
 	 * @param proxyException proxy exceptions
 	 * @param level level of logging
 	 */
-	public static void logExceptions(ProxyException proxyException, Level level) {
+	public static void logExceptions(SQLException proxyException, Level level) {
 		Throwable cause = proxyException.getCause();
 		
 		if (cause != null) {

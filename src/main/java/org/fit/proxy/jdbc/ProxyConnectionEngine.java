@@ -162,17 +162,7 @@ public class ProxyConnectionEngine {
 	
 	public void runSimpleAction(ISimpleAction action) throws SQLException {
 		ensureConnectionIsAlive();
-		
-		ActionUnit actionInfo = new ActionUnit(switcher);
-		
-		try {
-			runSimpleActionInstance(action, actionInfo);
-		} catch (SQLException e) {
-			String errMesage = action.getErrMessage();
-			log.log(Level.WARNING, errMesage, e);
-			
-			throw new SQLException(errMesage, e);
-		}
+		runSimpleActionInstance(action);
 	}
 	
 	private void runActionInstance(IAction action, ActionUnit info) throws SQLException {
@@ -187,14 +177,28 @@ public class ProxyConnectionEngine {
 		log.fine(action.getOkMessage());
 	}
 	
-	private void runSimpleActionInstance(ISimpleAction action, ActionUnit info) throws SQLException {
-		for (ConnectionUnit connection : info.getConnectionList()) {
-			info.setCurrent(connection);
-			
-			action.runAction(connection);
+	private void runSimpleActionInstance(ISimpleAction action) throws SQLException {
+		SQLException inCaseOfFailure = new SQLException(action.getErrMessage());
+		
+		for (ConnectionUnit connection : switcher.getConnectionList()) {
+			try {
+				action.runAction(connection);
+			} catch (SQLException e) {
+				String message = new StringBuilder("Unable to execute action in connection ").append(connection.getName()).append('.').toString();
+				ProxyException pe = new ProxyException(message, connection);
+				pe.initCause(e);
+				
+				inCaseOfFailure.setNextException(pe);
+			}
 		}
 		
-		log.fine(action.getOkMessage());
+		if (! inCaseOfFailure.iterator().hasNext()) {
+			log.fine(action.getOkMessage());
+		} else {
+			ProxyExceptionUtils.logExceptions(inCaseOfFailure, Level.WARNING);
+			throw inCaseOfFailure;
+		}
+		
 	}
 	
 	private void revertActionInstance(IAction action, ActionUnit info, ProxyException toThrow, Exception toLog) {
