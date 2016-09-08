@@ -45,10 +45,4 @@ public class CatalogAction implements IAction {
 	public Object getSaveValue(ConnectionUnit connection) throws SQLException {
 		return connection.getConnection().getCatalog();
 	}
-
-	@Override
-	public Object getResult() {
-		return null;
-	}
-
 }

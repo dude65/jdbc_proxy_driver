@@ -32,7 +32,6 @@ import org.fit.proxy.jdbc.actions.CatalogAction;
 import org.fit.proxy.jdbc.actions.ClearWarningsAction;
 import org.fit.proxy.jdbc.actions.CloseConnectionAction;
 import org.fit.proxy.jdbc.actions.GetWarningsAction;
-import org.fit.proxy.jdbc.actions.ISimpleAction;
 import org.fit.proxy.jdbc.actions.NetworkTimeoutAction;
 import org.fit.proxy.jdbc.actions.ReadOnlyAction;
 import org.fit.proxy.jdbc.actions.SchemaAction;
@@ -504,10 +503,10 @@ public class ProxyConnection implements Connection {
 	
 	@Override
 	public SQLWarning getWarnings() throws SQLException {
-		ISimpleAction action = new GetWarningsAction();
+		GetWarningsAction action = new GetWarningsAction();
 		engine.runSimpleAction(action);
 		
-		return (SQLWarning) action.getResult();
+		return action.getResult();
 	}
 	
 	@SuppressWarnings("unchecked")

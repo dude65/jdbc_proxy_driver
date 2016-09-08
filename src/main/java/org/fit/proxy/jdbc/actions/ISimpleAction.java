@@ -26,10 +26,4 @@ public interface ISimpleAction {
 	 * @return message
 	 */
 	public String getErrMessage();
-	
-	/**
-	 * Sometimes the action produce some result
-	 * @return action result
-	 */
-	public Object getResult();
 }

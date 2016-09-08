@@ -46,10 +46,4 @@ public class SchemaAction implements IAction {
 	public Object getSaveValue(ConnectionUnit connection) throws SQLException {
 		return connection.getConnection().getSchema();
 	}
-
-	@Override
-	public Object getResult() {
-		return null;
-	}
-
 }

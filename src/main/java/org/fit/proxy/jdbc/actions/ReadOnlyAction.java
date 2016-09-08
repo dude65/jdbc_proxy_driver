@@ -47,9 +47,4 @@ public class ReadOnlyAction implements IAction {
 		return connection.getConnection().isReadOnly();
 	}
 
-	@Override
-	public Object getResult() {
-		return null;
-	}
-
 }

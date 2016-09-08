@@ -31,8 +31,7 @@ public class GetWarningsAction implements ISimpleAction {
 		return "Unable to collect all SQL warnings.";
 	}
 
-	@Override
-	public Object getResult() {
+	public SQLWarning getResult() {
 		return resultWarning;
 	}
 

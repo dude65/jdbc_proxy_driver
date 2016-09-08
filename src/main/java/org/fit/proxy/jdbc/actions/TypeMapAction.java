@@ -40,11 +40,6 @@ public class TypeMapAction implements IAction {
 	}
 
 	@Override
-	public Object getResult() {
-		return null;
-	}
-
-	@Override
 	public String getPropertyName() {
 		return ProxyConstants.TYPE_MAP_ACTION;
 	}

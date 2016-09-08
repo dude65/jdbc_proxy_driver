@@ -27,9 +27,4 @@ public class AbortAction implements ISimpleAction {
 		return "Some connections could not be aborted";
 	}
 
-	@Override
-	public Object getResult() {
-		return null;
-	}
-
 }

@@ -47,9 +47,4 @@ public class AutoCommitAction implements IAction {
 		return autoCommit;
 	}
 
-	@Override
-	public Object getResult() {
-		return null;
-	}
-
 }

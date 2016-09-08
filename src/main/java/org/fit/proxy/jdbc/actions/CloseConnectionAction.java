@@ -20,10 +20,4 @@ public class CloseConnectionAction implements ISimpleAction {
 	public String getErrMessage() {
 		return "Proxy connection closed with problems.";
 	}
-
-	@Override
-	public Object getResult() {
-		return null;
-	}
-
 }

@@ -20,10 +20,4 @@ public class ClearWarningsAction implements ISimpleAction {
 	public String getErrMessage() {
 		return "Some warnings could not be cleared. Clearing unsuccessfull.";
 	}
-
-	@Override
-	public Object getResult() {
-		return null;
-	}
-
 }

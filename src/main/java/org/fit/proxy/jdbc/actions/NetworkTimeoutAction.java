@@ -50,9 +50,4 @@ public class NetworkTimeoutAction implements IAction {
 		return connection.getConnection().getNetworkTimeout();
 	}
 
-	@Override
-	public Object getResult() {
-		return null;
-	}
-
 }

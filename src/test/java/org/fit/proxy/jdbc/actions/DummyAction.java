@@ -98,9 +98,4 @@ public class DummyAction implements IAction {
 		return valueMap.get(connection);
 	}
 
-	@Override
-	public Object getResult() {
-		return null;
-	}
-
 }
