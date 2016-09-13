@@ -52,8 +52,8 @@ public class TestLoader {
 		
 		Assert.assertEquals(s1, s2);
 		
-		s1.closeConnections();
-		s2.closeConnections();
+		TestUtils.closeConnections(s1.getConnectionList());
+		TestUtils.closeConnections(s2.getConnectionList());
 	}
 	
 	@Test(expected=SQLException.class)

@@ -98,7 +98,7 @@ public class TestSwitcher {
 	
 	@After
 	public void close() throws SQLException {
-		s.closeConnections();
+		TestUtils.closeConnections(s.getConnectionList());
 	}
 
 }

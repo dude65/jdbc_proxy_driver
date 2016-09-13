@@ -81,6 +81,15 @@ public class ProxyConnection implements Connection {
 	}
 	
 	/**
+	 * Sets default database connection specified by connection unit.
+	 * @param connection connection to make default
+	 * @throws SQLException when connection is not present in connection map or is null
+	 */
+	public void setDefaultDatabase(ConnectionUnit connection) throws SQLException {
+		engine.setDefaultDatabase(connection);
+	}
+	
+	/**
 	 * Sets default database connection to null.
 	 * @throws SQLException if connection is closed
 	 */

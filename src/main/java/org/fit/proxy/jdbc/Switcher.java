@@ -5,13 +5,13 @@ import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.TreeMap;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.fit.proxy.jdbc.exception.ProxyException;
 
 /**
  * @author Ondřej Marek
@@ -22,46 +22,37 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 public class Switcher {
 	private final static Logger log = Logger.getLogger(ProxyDriver.class.getName());
 	
-	private Map<String, ConnectionUnit> connectList;
-	private ConnectionUnit defConnection;
-	boolean open = true;
-	private List<Connection> failedList = new LinkedList<>();
+	private Map<String, ConnectionUnit> connectionList;
+	private ConnectionUnit defaultConnection;
+	
+	@Deprecated //TODO move to engine
 	private Properties properties;
 	
-	public Switcher(Map<String, ConnectionUnit> connectList, ConnectionUnit defConnection, Properties properties) {
-		this.connectList = connectList;
-		this.defConnection = defConnection;
+	public Switcher(Map<String, ConnectionUnit> connectionList, ConnectionUnit defaultConnection, Properties properties) {
+		this.connectionList = connectionList;
+		this.defaultConnection = defaultConnection;
 		this.properties = properties;
 		
-		log.log(Level.INFO, "Switcher established. Connections: " + connectList + "\nDefault: " + defConnection);
+		log.fine("Switcher established. Connections: " + connectionList + "\nDefault: " + defaultConnection);
 	}
 	/**
 	 * This method is getter for all connection units
 	 * @return - list of connection units
 	 */
-	public List<ConnectionUnit> getConnectionList() {
-		log.log(Level.FINE, "Getting list of all connections.");
-		
-		return new LinkedList<ConnectionUnit>(connectList.values());
+	public List<ConnectionUnit> getConnectionList() {		
+		return new LinkedList<ConnectionUnit>(connectionList.values());
 	}
 	
 	public ConnectionUnit getDefaultConnection() throws SQLException {
-		log.log(Level.FINE, "Getting default connection.");
-		
-		if (defConnection == null) {
-			String exc = "No default connection set!";
-			
-			log.log(Level.SEVERE, exc);
-			
+		if (defaultConnection == null) {
+			String exc = "No default connection is set!";			
 			throw new SQLException(exc);
 		}
 		
-		return defConnection;
+		return defaultConnection;
 	}
 	
 	public Properties getProperties() {
-		log.log(Level.FINE, "Getting connection properties");
-		
 		return properties;
 	}
 	
@@ -76,53 +67,57 @@ public class Switcher {
 	 * @throws SQLException - If there is no database that suits to query and there is no default database set or if there are more suitable databases, the exception is thrown
 	 */
 	public Connection getConnection(String sql) throws SQLException {
-		ConnectionUnit res = null;
-		boolean found = false;
+		log.fine(new StringBuilder().append("Starting to associate connection to sql :").append(sql).toString());
 		
-		log.log(Level.INFO, "Associating connection to sql:" + sql);
+		ConnectionUnit result = associateConnection(sql);
+		result = checkResult(result, sql);
 		
-		for(Map.Entry<String, ConnectionUnit> entry : connectList.entrySet()) {
-			ConnectionUnit u = entry.getValue();
+		return result.getConnection();
+	}
+	
+	private ConnectionUnit associateConnection(String sql) throws SQLException {
+		ConnectionUnit result = null;
+		
+		for (Entry<String, ConnectionUnit> entry : connectionList.entrySet()) {
+			ConnectionUnit connection = entry.getValue();
 			
-			if (u.matches(sql)) {
-				log.log(Level.FINE, "Connection " + u.getName() + "matches to sql: " + sql);
+			if (connection.matches(sql)) {
+				log.fine(new StringBuilder("Connection ").append(connection.getName()).append(" matches to sql query:").append(sql).toString());
 				
-				if (!found) {
-					found = true;
-					res = u;
-				} else {
-					failedList.clear();
-					failedList.add(res.getConnection());
-					failedList.add(u.getConnection());
+				if (result != null) {
+					String errMessage = new StringBuilder("The sql query").append(sql).append(" is ambigious. More databases matches.").toString();
+					log.fine(errMessage);
 					
-					String exc = "The sql query is ambigious. There are more suitable database connection (" + res.getName() +", " + u.getName() + ") to your request.";
+					SQLException exception = new SQLException(errMessage);
 					
-					log.log(Level.SEVERE, exc);
-					throw new SQLException(exc);
+					String message = "Ambigious connection.";
+					exception.setNextException(new ProxyException(message, result));
+					exception.setNextException(new ProxyException(message, connection));
+					
+					throw exception;
 				}
+				
+				result = connection;
 			}
 		}
 		
-		if (!found) {
-			log.log(Level.FINE, "No database connection matches to sql query (" + sql + "). Checking for default connection.");
-			
-			if (defConnection != null) {
-				log.log(Level.FINE, "Default connection (" + defConnection.getName() + ")was found. Associating tu query:" + sql);
-				
-				res = defConnection;
+		return result;
+	}
+	
+	private ConnectionUnit checkResult(ConnectionUnit chosen, String sql) throws SQLException {
+		if (chosen == null) {
+			if (defaultConnection != null) {
+				log.fine(new StringBuilder("Sql query does not match to any connection, but default connection (").append(defaultConnection.getName()).append(") is set. Sql query: ").append(sql).toString());
+				chosen = defaultConnection;
 			} else {
-				failedList.clear();
-				
-				String exc = "There is no suitable database to the sql query";
-				
-				log.log(Level.SEVERE, exc);
-				throw new SQLException(exc);
+				log.fine(new StringBuilder("Sql query was not associated to any connection and default connection is unset. Sql query: ").append(sql).toString());
+				throw new SQLException(new StringBuilder("There is no suitable database for sql query: ").append(sql).toString());
 			}
+		} else {
+			log.fine(new StringBuilder("Connection ").append(chosen.getName()).append(" was associated to query ").append(sql).toString());
 		}
 		
-		log.log(Level.INFO, "Associating sql query (" + sql + ") was successful. The chosen connection is " + res.getName());
-		
-		return res.getConnection();
+		return chosen;
 	}
 	
 	/**
@@ -131,56 +126,7 @@ public class Switcher {
 	 * @return connection or null if not found
 	 */
 	public ConnectionUnit getConnectionByName(String name) {		
-		return connectList.get(name);
-	}
-	
-	/**
-	 * It closes all connections. Deprecated now. TODO refactor switcher and tests
-	 * @throws SQLException - when some connections fails to close, then the exception with names of connections and descriptions of exception are thrown.
-	 */
-	@Deprecated
-	public void closeConnections() throws SQLException {
-		Map<String, SQLException> exList = new TreeMap<>();
-		List<Connection> notClosed = new LinkedList<>();
-		
-		log.log(Level.INFO, "Closing connections.");
-		
-		for (Map.Entry<String, ConnectionUnit> entry : connectList.entrySet()) {
-			String name = entry.getKey();
-			ConnectionUnit cu = entry.getValue();
-			
-			try {
-				cu.getConnection().close();
-				
-				log.log(Level.FINE, "Closing connection " + cu.getName() + " was successful.");
-			} catch (SQLException e) {
-				
-				exList.put(name, e);
-				notClosed.add(cu.getConnection());
-				
-				log.log(Level.SEVERE, "Closing connection " + cu.getName() + " failed.");
-			}	
-		}
-		
-		if (exList.size() > 0) {
-			failedList.clear();
-			failedList.addAll(notClosed);
-			
-			String reason = new String();
-			
-			reason += "These connections cannot be closed:\n";
-			
-			for (Map.Entry<String, SQLException> entry : exList.entrySet()) {
-				reason += '\n' + entry.getKey() + ": " + entry.getValue().getMessage();
-			}
-			
-			log.log(Level.SEVERE, reason);
-			throw new SQLException(reason);
-		}
-		
-		log.log(Level.INFO, "Closing connections was successful.");
-		
-		open = false;
+		return connectionList.get(name);
 	}
 	
 	/**
@@ -190,18 +136,31 @@ public class Switcher {
 	 * @throws SQLException - name of connection does not match to any connection
 	 */
 	public void setDefaultDatabase(String name) throws SQLException {
-		ConnectionUnit u = connectList.get(name);
+		ConnectionUnit newDefault = connectionList.get(name);
 		
-		log.log(Level.INFO, "Setting default database");
-		
-		if (u != null) {
-			defConnection = u;
+		if (newDefault != null) {
+			defaultConnection = newDefault;
 		} else {
-			failedList.clear();
-			String exc = "Setting default connection failed. Database connection named " + name + " does not exists.";
-			
-			log.log(Level.SEVERE, exc);
-			throw new SQLException(exc);
+			String message = new StringBuilder("Cannot set up default connection ").append(name).append(". This connection does not exists.").toString();
+			throw new SQLException(message);
+		}
+	}
+	
+	/**
+	 * Sets default database connection specified by connection unit.
+	 * @param connection connection to make default
+	 * @throws SQLException when connection is not present in connection map or is null
+	 */
+	public void setDefaultDatabase(ConnectionUnit connection) throws SQLException {
+		if (connection == null) {
+			throw new SQLException("No default connection specified. If you wanted to unset default connection, please use method unsetDefaultDatabase instead.");
+		}
+		
+		if (connectionList.containsKey(connection)) {
+			defaultConnection = connection;
+		} else {
+			String message = new StringBuilder("Unknown connection: ").append(connection.getName()).append(". This connection cannot be set.").toString();
+			throw new ProxyException(message, connection);
 		}
 	}
 	
@@ -209,31 +168,17 @@ public class Switcher {
 	 * Sets default database connection to null.
 	 */
 	public void unsetDefaultDatabase() {
-		log.log(Level.INFO, "Default connection is unset");
-		
-		defConnection = null;
-	}
-	
-	/**
-	 * Returns the list of failed connections from the last time, when exception was thrown. It is useful when handling exception.
-	 * 
-	 * @return - the list of failed connections (new object), if no connection ever failed, then returns empty list
-	 */
-	@Deprecated
-	public List<Connection> getFailedConnections() {
-		log.log(Level.INFO, "Getting list of failed connections.");
-		
-		return new LinkedList<Connection>(failedList);
+		defaultConnection = null;
 	}
 	
 	@Override
 	public String toString() {
-		return connectList.toString() + "/nDefault: " + ((defConnection == null) ? "null" : defConnection.toString());
+		return connectionList.toString() + "/nDefault: " + ((defaultConnection == null) ? "null" : defaultConnection.toString());
 	}
 	
 	@Override
 	public int hashCode() {
-		return new HashCodeBuilder(99, 1171).append(defConnection).toHashCode();
+		return new HashCodeBuilder(99, 1171).append(defaultConnection).toHashCode();
 	}
 	
 	@Override
@@ -252,6 +197,6 @@ public class Switcher {
 		
 		Switcher oth = (Switcher) obj;
 		
-		return new EqualsBuilder().append(connectList, oth.connectList).append(defConnection, oth.defConnection).isEquals();
+		return new EqualsBuilder().append(connectionList, oth.connectionList).append(defaultConnection, oth.defaultConnection).isEquals();
 	}
 }

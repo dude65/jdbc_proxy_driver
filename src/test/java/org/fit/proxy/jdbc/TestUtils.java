@@ -9,7 +9,9 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -59,5 +61,11 @@ public class TestUtils {
 		properties.load(new ByteArrayInputStream(template.getBytes()));
 		
 		return properties;
+	}
+	
+	public static void closeConnections(List<ConnectionUnit> connections) throws SQLException {
+		for (ConnectionUnit connection : connections) {
+			connection.getConnection().close();
+		}
 	}
 }

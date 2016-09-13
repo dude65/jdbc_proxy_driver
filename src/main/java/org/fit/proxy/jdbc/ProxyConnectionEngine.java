@@ -117,6 +117,11 @@ public class ProxyConnectionEngine {
 		switcher.setDefaultDatabase(database);
 	}
 	
+	public void setDefaultDatabase(ConnectionUnit database) throws SQLException {
+		ensureConnectionIsAlive();
+		switcher.setDefaultDatabase(database);
+	}
+	
 	public void unsetDefaultDatabase() throws SQLException {
 		ensureConnectionIsAlive();
 		switcher.unsetDefaultDatabase();
@@ -192,7 +197,7 @@ public class ProxyConnectionEngine {
 			}
 		}
 		
-		if (! inCaseOfFailure.iterator().hasNext()) {
+		if (ProxyExceptionUtils.actionRevertedSuccessfully(inCaseOfFailure)) {
 			log.fine(action.getOkMessage());
 		} else {
 			ProxyExceptionUtils.logExceptions(inCaseOfFailure, Level.WARNING);
