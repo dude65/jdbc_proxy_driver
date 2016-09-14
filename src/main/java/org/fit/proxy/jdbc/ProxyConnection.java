@@ -89,6 +89,10 @@ public class ProxyConnection implements Connection {
 		engine.setDefaultDatabase(connection);
 	}
 	
+	public ConnectionUnit getDefaultConnection() throws SQLException {
+		return engine.getDefaultConnection();
+	}
+
 	/**
 	 * Sets default database connection to null.
 	 * @throws SQLException if connection is closed

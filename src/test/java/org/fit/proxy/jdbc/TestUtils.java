@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.h2.tools.DeleteDbFiles;
 
@@ -49,9 +48,10 @@ public class TestUtils {
 	}
 	
 	public static Properties loadDefaultProperties() throws Exception {
-		String path = TestUtils.class.getClassLoader().getResource("templateConfig.properties").toString();
+		String path = TestUtils.class.getClassLoader().getResource("templateConfig.properties").getPath();
+		String directory = new URI(path).resolve(".").getPath();
 		Map<String, String> replaceMap = new HashMap<>();
-		replaceMap.put("path", FilenameUtils.getFullPathNoEndSeparator(path));
+		replaceMap.put("path", directory);
 		
 		StrSubstitutor str = new StrSubstitutor(replaceMap);
 		String template = FileUtils.readFileToString(new File(path), StandardCharsets.UTF_8);
