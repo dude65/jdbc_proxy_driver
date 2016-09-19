@@ -44,11 +44,6 @@ public class Switcher {
 	}
 	
 	public ConnectionUnit getDefaultConnection() throws SQLException {
-		if (defaultConnection == null) {
-			String exc = "No default connection is set!";			
-			throw new SQLException(exc);
-		}
-		
 		return defaultConnection;
 	}
 	
@@ -66,13 +61,13 @@ public class Switcher {
 	 * @return Connection - Returns that is connected to the SQL query
 	 * @throws SQLException - If there is no database that suits to query and there is no default database set or if there are more suitable databases, the exception is thrown
 	 */
-	public Connection getConnection(String sql) throws SQLException {
+	public ConnectionUnit getConnection(String sql) throws SQLException {
 		log.fine(new StringBuilder().append("Starting to associate connection to sql :").append(sql).toString());
 		
 		ConnectionUnit result = associateConnection(sql);
 		result = checkResult(result, sql);
 		
-		return result.getConnection();
+		return result;
 	}
 	
 	private ConnectionUnit associateConnection(String sql) throws SQLException {

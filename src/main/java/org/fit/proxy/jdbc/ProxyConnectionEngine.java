@@ -20,94 +20,27 @@ import org.fit.proxy.jdbc.exception.ProxyExceptionUtils;
  * @author Ondřej Marek
  *
  */
-public class ProxyConnectionEngine {
+public class ProxyConnectionEngine implements IConnectionEnsure {
 	private final static Logger log = Logger.getLogger(ProxyDriver.class.getName());
 	private final Switcher switcher;
 	
 	public ProxyConnectionEngine(Switcher switcher) {
 		this.switcher = switcher;
 	}
-
-	/**
-	 * Map, that contains properties that are set in proxy connection
-	 */
-	private Map<String, ConnectionPropertiesUnit> connectionProperties = new HashMap<>();
 	
-	/**
-	 * Sets property
-	 * @param name property name
-	 * @param value property value
-	 */
-	public void setProperty(String name, Object value) {
-		ConnectionPropertiesUnit property = connectionProperties.get(name);
-		
-		if (property == null) {
-			property = new ConnectionPropertiesUnit(name);
-			connectionProperties.put(name, property);
-		}
-		
-		property.setValue(value);
-		
-	}
+	private final ProxyProperiesHelper propertiesHelper = new ProxyProperiesHelper(this);
 	
-	
-	/**
-	 * Unsets property
-	 * @param name property name
-	 */
-	public void unsetProperty(String name) {
-		ConnectionPropertiesUnit property = connectionProperties.get(name);
-		
-		if (property != null) {
-			property.unsetValueSet();
-		}
-	}
-	
-	/**
-	 * Checks whether property is set
-	 * @param name property name
-	 * @return whether is property set
-	 */
-	public boolean isPropertySet(String name) {
-		ConnectionPropertiesUnit property = connectionProperties.get(name);
-		
-		return property != null && property.isValueSet();
-	}
-	
-	/**
-	 * Checks if the property was even initiated
-	 * @param name property name
-	 * @return whether property was initiated
-	 */
-	public boolean isPropertyInitiated(String name) {
-		return connectionProperties.containsKey(name);
-	}
-	
-	/**
-	 * Returns a value by given name
-	 * @param name property name
-	 * @return property value
-	 * @throws SQLException if property has not been set, yet.
-	 */
-	public Object getPropertyValue(String name) throws SQLException {
-		ensureConnectionIsAlive();
-		
-		if (!isPropertySet(name)) {
-			String message = new StringBuilder("Attempting to get property named ").append(name).append(" which has not been set, yet!").toString();
-			log.warning(message);
-			
-			throw new SQLException(message);
-		}
-		
-		return connectionProperties.get(name).getValue();
+	public ProxyProperiesHelper getPropertiesHelper() {
+		return propertiesHelper;
 	}
 	
 	/**
 	 * method that throws an exception when connections are closed
 	 * @throws SQLException if connections are closed
 	 */
+	@Override
 	public void ensureConnectionIsAlive() throws SQLException {
-		if (isPropertySet(ProxyConstants.CLOSE_CONNECTION)) {
+		if (propertiesHelper.isPropertySet(ProxyConstants.CLOSE_CONNECTION)) {
 			throw new SQLException("Proxy connection has been already closed!");
 		}
 	}
@@ -132,7 +65,12 @@ public class ProxyConnectionEngine {
 		return switcher.getConnectionByName(name);
 	}
 	
-	public Connection getConnection(String sql) throws SQLException {
+	public List<ConnectionUnit> getConnectionList() throws SQLException {
+		ensureConnectionIsAlive();
+		return switcher.getConnectionList();
+	}
+	
+	public ConnectionUnit getConnection(String sql) throws SQLException {
 		ensureConnectionIsAlive();
 		return switcher.getConnection(sql);
 	}
@@ -178,7 +116,7 @@ public class ProxyConnectionEngine {
 			action.runAction(connection);
 		}
 		
-		setProperty(action.getPropertyName(), action.getPropertyValue());
+		propertiesHelper.setProperty(action.getPropertyName(), action.getPropertyValue());
 		log.fine(action.getOkMessage());
 	}
 	
@@ -233,7 +171,7 @@ public class ProxyConnectionEngine {
 				sb.append('(').append(entry.getKey().getName()).append(',').append(entry.getValue().toString()).append(')');
 			}
 			
-			unsetProperty(action.getPropertyName());
+			propertiesHelper.unsetProperty(action.getPropertyName());
 			log.severe(sb.toString());
 		}
 	}

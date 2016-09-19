@@ -120,7 +120,7 @@ public class ProxyStatement implements Statement {
 		
 		log.log(Level.FINE, "Getting the right statement.");
 		
-		Connection act = connection.getSwitcher().getConnection(sql);
+		Connection act = connection.getSwitcher().getConnection(sql).getConnection();
 		
 		
 		switch (resultSetCase) {
