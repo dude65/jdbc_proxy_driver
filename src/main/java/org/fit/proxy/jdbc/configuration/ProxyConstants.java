@@ -13,4 +13,15 @@ public class ProxyConstants {
 	public static final String TYPE_MAP_ACTION = "typeMap";
 	
 	public static final String CLOSE_CONNECTION = "close";
+	
+	public static final String MAX_FIELD_SIZE = "maxFieldSize";
+	public static final String MAX_ROWS = "maxRows";
+	public static final String ESCAPE_PROCESSING = "escapeProcessing";
+	public static final String QUERY_TIMEOUT = "queryTimeout";
+	public static final String CURSOR_NAME = "cursorName";
+	public static final String FETCH_DIR = "fetchDirection";
+	public static final String FETCH_SIZE = "fetchSize";
+	public static final String RESULT_SET_HOLDABILITY = "resultSetHoldability";
+	public static final String POOLABLE = "poolable";
+	public static final String CLOSE_ON_COMPLETION = "closeOnCompletion";
 }

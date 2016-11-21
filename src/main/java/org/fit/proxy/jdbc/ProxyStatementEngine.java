@@ -32,8 +32,14 @@ public class ProxyStatementEngine implements IConnectionEnsure {
 			throw new SQLException("Proxy statement is already closed!");
 		}
 	}
+	
+	public boolean isStatementClosed() throws SQLException {
+		return statement.isClosed();
+	}
 
-	public Statement getStatement() {
+	public Statement getStatement() throws SQLException {
+		ensureConnectionIsAlive();
+		
 		return statement;
 	}
 
@@ -44,6 +50,12 @@ public class ProxyStatementEngine implements IConnectionEnsure {
 	 * @throws SQLException connection closed or error when reflecting set variables to new statement
 	 */
 	public Statement getStatement(String sql) throws SQLException {
+		ensureConnectionIsAlive();
+		
+		if (statement != null) {
+			statement.close();
+		}
+		
 		statement = statementFactory.createStatement(proxyConnection.getConnectionBySql(sql));
 
 		try {
@@ -74,7 +86,13 @@ public class ProxyStatementEngine implements IConnectionEnsure {
 		statement = statementFactory.createStatement(connection);
 	}
 
-	public ProxyProperiesHelper getPropertiesHelper() {
+	public ProxyProperiesHelper getPropertiesHelper() throws SQLException {
+		ensureConnectionIsAlive();
 		return propertiesHelper;
+	}
+	
+	public ProxyConnection getConnection() throws SQLException {
+		ensureConnectionIsAlive();
+		return proxyConnection;
 	}
 }

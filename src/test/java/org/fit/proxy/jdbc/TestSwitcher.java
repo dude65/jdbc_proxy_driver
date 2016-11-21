@@ -26,7 +26,9 @@ public class TestSwitcher {
 	
 	@Test
 	public void test1() throws SQLException {
-		Assert.assertEquals(s.getConnection("SELECT * FROM persons"), s.getConnectionByName("database1").getConnection());
+		ConnectionUnit fromQuery = s.getConnection("SELECT * FROM persons");
+		ConnectionUnit fromName = s.getConnectionByName("database1");
+		Assert.assertEquals(fromName, fromQuery);
 	}
 	
 	@Test(expected=SQLException.class)
@@ -40,13 +42,17 @@ public class TestSwitcher {
 	@Test
 	public void test3() throws SQLException {
 		s.unsetDefaultDatabase();
-		Assert.assertEquals(s.getConnection("INSERT INTO `homes` (`ID`, `street`, `city`, `houseNumber`, `zipCode`) VALUES (4, 'Catlover's', 'London', 8, 11111);"), s.getConnectionByName("database3").getConnection());
+		ConnectionUnit fromName = s.getConnectionByName("database3");
+		ConnectionUnit fromQuery = s.getConnection("INSERT INTO `homes` (`ID`, `street`, `city`, `houseNumber`, `zipCode`) VALUES (4, 'Catlover's', 'London', 8, 11111);");
+		Assert.assertEquals(fromName, fromQuery);
 	}
 	
 	@Test
 	public void test4() throws SQLException {
 		s.unsetDefaultDatabase();
-		Assert.assertEquals(s.getConnection("UPDATE `homes` SET `city` = 'Madrid` WHERE `ID` = 1"), s.getConnectionByName("database2").getConnection());
+		ConnectionUnit fromName = s.getConnection("UPDATE `homes` SET `city` = 'Madrid` WHERE `ID` = 1");
+		ConnectionUnit fromQuery = s.getConnectionByName("database2");
+		Assert.assertEquals(fromName, fromQuery);
 	}
 	
 	@Test(expected=SQLException.class)
@@ -79,13 +85,17 @@ public class TestSwitcher {
 	@Test
 	public void test8() throws SQLException {
 		s.setDefaultDatabase("database2");
-		Assert.assertEquals(s.getConnection("eg wesw"), s.getConnectionByName("database2").getConnection());
+		ConnectionUnit fromName = s.getConnectionByName("database2");
+		ConnectionUnit fromQuery = s.getConnection("eg wesw");
+		Assert.assertEquals(fromName, fromQuery);
 	}
 	
 	@Test
 	public void test9() throws SQLException {
 		s.setDefaultDatabase("database2");
-		Assert.assertEquals(s.getConnection(" SELECT * FROM persons"), s.getConnectionByName("database2").getConnection());
+		ConnectionUnit fromName = s.getConnectionByName("database2");
+		ConnectionUnit fromQuery = s.getConnection(" SELECT * FROM persons");
+		Assert.assertEquals(fromName, fromQuery);
 	}
 	
 	@Test(expected=SQLException.class)
