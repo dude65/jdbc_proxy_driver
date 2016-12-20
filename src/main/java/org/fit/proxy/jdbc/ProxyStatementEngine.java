@@ -34,10 +34,18 @@ public class ProxyStatementEngine implements IConnectionEnsure {
 
 	@Override
 	public void ensureConnectionIsAlive() throws SQLException {
-		if (proxyConnection.isClosed() || statement.isClosed()) {
+		if (isClosed()) {
 			throw new SQLException("Proxy statement is already closed!");
 		}
 	}
+
+	private boolean isClosed() {
+        try {
+            return proxyConnection.isClosed() || statement.isClosed();
+        } catch (SQLException e) {
+            return false;
+        }
+    }
 	
 	public boolean isStatementClosed() throws SQLException {
 		return statement.isClosed();
@@ -118,6 +126,10 @@ public class ProxyStatementEngine implements IConnectionEnsure {
 	}
 
 	public void close() {
+	    if (isClosed()) {
+	        return;
+        }
+
 		batcher.safeClose();
 
 		try {

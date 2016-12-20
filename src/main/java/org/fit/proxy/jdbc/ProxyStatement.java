@@ -232,83 +232,19 @@ public class ProxyStatement implements Statement {
 		return engine.getStatement().getResultSetType();
 	}
 
-	//TODO
 	@Override
 	public void addBatch(String sql) throws SQLException {
-		throw new UnsupportedOperationException("Temporarily not available");
-		/*try {
-			log.log(Level.INFO, "Adding batch: " + sql);
-			CallableStatement s = connection.prepareCall(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
-			batchList.add(s);
-		} catch (SQLException e) {
-			String exc = "Unable to add batch, orriginal message: " + e.getMessage();
-			
-			log.log(Level.SEVERE, exc);
-			throw new SQLException(exc);
-		}*/
-		
+		engine.addBatch(sql);
 	}
 
 	@Override
 	public void clearBatch() throws SQLException {
-		throw new UnsupportedOperationException("Temporarily not available");
-		/*String exc = new String();
-		boolean first = false;
-		
-		log.log(Level.INFO, "Clearing batch.");
-		
-		for (Iterator<CallableStatement> i = batchList.iterator(); i.hasNext();) {
-			Statement s = i.next();
-			
-			try {
-				s.close();
-			} catch (SQLException e) {
-				if (first) {
-					first = false;
-				} else {
-					exc += '\n';
-				}
-				
-				log.log(Level.SEVERE, "Error when closing batch statement.");
-				exc += "Unable to close statement when clearing batch. Original message: " + e.getMessage();
-			}
-			
-			
-		}
-		
-		if (! exc.isEmpty()) {
-			log.log(Level.SEVERE, exc);
-			throw new SQLException(exc);
-		}
-		
-		batchList.clear();
-		*/
+		engine.clearBatch();
 	}
 
 	@Override
 	public int[] executeBatch() throws SQLException {
-		throw new UnsupportedOperationException("Temporarily not available");
-		/*int[] res = new int[batchList.size()];
-		int i = 0;
-		
-		log.log(Level.INFO, "Executing batch.");
-		try {
-			for (Iterator<CallableStatement> it = batchList.iterator(); it.hasNext(); i++) {
-				CallableStatement s = it.next();
-				
-				log.log(Level.FINE, "Executing batch statement #" + i);
-				res[i] = s.executeUpdate();
-			}
-		} catch (SQLException e) {
-			String exc = "Executing batch failed, original message: " + e.getMessage();
-			
-			log.log(Level.SEVERE, exc);
-			throw new SQLException(exc);
-		}
-		
-		log.log(Level.INFO, "Batch executing was successful.");
-		
-		return res;*/
+		return engine.executeBatch();
 	}
 
 	@Override
