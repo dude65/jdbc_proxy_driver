@@ -9,4 +9,6 @@ usage.html~
 .idea/
 src/main/main.iml
 src/test/test.iml
+jdbc-proxy-driver.iml
+
 

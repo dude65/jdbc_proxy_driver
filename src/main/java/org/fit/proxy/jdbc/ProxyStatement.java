@@ -94,7 +94,7 @@ public class ProxyStatement implements Statement {
 	public void close() throws SQLException {
 		log.fine("Closing proxy statement.");
 		
-		engine.getStatement().close();
+		engine.close();
 	}
 
 	@Override

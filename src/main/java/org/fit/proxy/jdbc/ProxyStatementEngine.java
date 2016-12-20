@@ -5,6 +5,8 @@ import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -13,8 +15,11 @@ import org.apache.commons.lang3.StringUtils;
  * @author Ondřej Marek
  */
 public class ProxyStatementEngine implements IConnectionEnsure {
+	private final static Logger log = Logger.getLogger(ProxyDriver.class.getName());
+
 	private final ProxyConnection proxyConnection;
 	private final StatementConstructorFactory statementFactory;
+	private final ProxyStatementBatcher batcher;
 	private Statement statement;
 
 	private final ProxyProperiesHelper propertiesHelper = new ProxyProperiesHelper(this);
@@ -22,7 +27,8 @@ public class ProxyStatementEngine implements IConnectionEnsure {
 	public ProxyStatementEngine(ProxyConnection connection, StatementConstructorFactory statementFactory) throws SQLException {
 		this.proxyConnection = connection;
 		this.statementFactory = statementFactory;
-		
+		this.batcher = new ProxyStatementBatcher(this.proxyConnection, this.statementFactory);
+
 		initiateStatement();
 	}
 
@@ -94,5 +100,30 @@ public class ProxyStatementEngine implements IConnectionEnsure {
 	public ProxyConnection getConnection() throws SQLException {
 		ensureConnectionIsAlive();
 		return proxyConnection;
+	}
+
+	public void addBatch(String sql) throws SQLException {
+		ensureConnectionIsAlive();
+		batcher.addBatch(sql);
+	}
+
+	public void clearBatch() throws SQLException {
+		ensureConnectionIsAlive();
+		batcher.clearBatch();
+	}
+
+	public int[] executeBatch() throws SQLException {
+		ensureConnectionIsAlive();
+		return batcher.executeBatch();
+	}
+
+	public void close() {
+		batcher.safeClose();
+
+		try {
+			statement.close();
+		} catch (SQLException e) {
+			log.log(Level.WARNING, "Problem closing statement", e);
+		}
 	}
 }
