@@ -6,3 +6,7 @@ target/
 .classpath
 .project
 usage.html~
+.idea/
+src/main/main.iml
+src/test/test.iml
+
